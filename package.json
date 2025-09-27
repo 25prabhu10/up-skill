@@ -1,6 +1,5 @@
 {
   "author": "Prabhu K H",
-  "private": true,
   "bugs": {
     "url": "https://github.com/25prabhu10/up-skill/issues"
   },
@@ -14,9 +13,20 @@
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   },
+  "engines": {
+    "node": ">=22.17.0",
+    "pnpm": ">=10.12.4"
+  },
   "homepage": "https://github.com/25prabhu10/up-skill#readme",
+  "keywords": [
+    "leetcode",
+    "coding challenges",
+    "JavaScript"
+  ],
   "license": "MIT",
   "name": "up-skill",
+  "packageManager": "pnpm@10.17.1+sha512.17c560fca4867ae9473a3899ad84a88334914f379be46d455cbf92e5cf4b39d34985d452d2583baf19967fa76cb5c17bc9e245529d0b98745721aa7200ecaf7a",
+  "private": true,
   "repository": {
     "type": "git",
     "url": "git@github.com:25prabhu10/up-skill.git"
@@ -26,21 +36,11 @@
     "check-types": "tsc --noEmit",
     "dev": "tsdown --watch",
     "format": "biome format --write .",
-    "format:fix": "biome check --formatter-enabled=false --linter-enabled=false .",
+    "format:fix": "biome check --fix --formatter-enabled=false --linter-enabled=false .",
     "lint": "oxlint . --type-aware --tsconfig ./tsconfig.json",
     "lint:fix": "oxlint . --type-aware --fix --tsconfig ./tsconfig.json",
     "test": "vitest"
   },
-  "keywords": [
-    "leetcode",
-    "coding challenges",
-    "JavaScript"
-  ],
-  "engines": {
-    "node": ">=22.17.0",
-    "pnpm": ">=10.12.4"
-  },
   "type": "module",
-  "version": "0.0.0",
-  "packageManager": "pnpm@10.17.1+sha512.17c560fca4867ae9473a3899ad84a88334914f379be46d455cbf92e5cf4b39d34985d452d2583baf19967fa76cb5c17bc9e245529d0b98745721aa7200ecaf7a"
+  "version": "0.0.0"
 }
