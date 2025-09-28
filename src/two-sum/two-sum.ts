@@ -14,7 +14,7 @@ export function twoSum(nums: number[], target: number): number[] {
   const diffs = new Map()
 
   for (let i = 0; i < nums.length; i++) {
-    if (diffs.get(nums[i]) !== undefined) {
+    if (diffs.has(nums[i])) {
       return [diffs.get(nums[i]), i]
     }
 
@@ -22,4 +22,21 @@ export function twoSum(nums: number[], target: number): number[] {
   }
 
   return []
+}
+
+export function twoSumFastest(nums, target) {
+  const map = new Map()
+  let ans
+  nums.some((number, index) => {
+    const requiredValue = target - number
+    if (map.has(requiredValue)) {
+      ans = [map.get(requiredValue), index]
+      return true
+    }
+
+    map.set(number, index)
+    return false
+  })
+
+  return ans
 }
