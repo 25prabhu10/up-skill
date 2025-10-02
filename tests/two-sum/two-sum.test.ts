@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { twoSum } from '../../src/two-sum/two-sum'
+import { twoSum } from '@/two-sum/two-sum'
 
 describe('Two Sum', () => {
   test('should return indices of the two numbers such that they add up', () => {
