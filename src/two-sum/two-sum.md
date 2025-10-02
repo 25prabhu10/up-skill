@@ -1,3 +1,7 @@
+---
+topics: HashMap
+---
+
 # 1. Two Sum (Easy)
 
 Problem link: [Two Sum](https://leetcode.com/problems/two-sum)

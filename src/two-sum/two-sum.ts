@@ -24,9 +24,9 @@ export function twoSum(nums: number[], target: number): number[] {
   return []
 }
 
-export function twoSumFastest(nums, target) {
+export function twoSumFastest(nums: number[], target: number): number[] {
   const map = new Map()
-  let ans
+  let ans: number[] = []
   nums.some((number, index) => {
     const requiredValue = target - number
     if (map.has(requiredValue)) {

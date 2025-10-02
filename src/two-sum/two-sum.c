@@ -18,3 +18,7 @@ int *twoSumBrute(int *nums, int numsSize, int target, int *returnSize) {
   *returnSize = 0;
   return malloc(sizeof(int) * *returnSize);
 }
+
+int *twoSum(int *nums, int numsSize, int target, int *returnSize) {
+  return twoSumBrute(nums, numsSize, target, returnSize);
+}
