@@ -19,9 +19,9 @@ TEST_OBJ_DIR := $(BUILD_DIR)/tests/obj
 TEST_BIN := $(BUILD_DIR)/tests/all_tests
 
 # Compiler flags
-CFLAGS_COMMON := -std=c11 -Wall -Wextra -Wpedantic -Wstrict-overflow -Wundef -Winline -Wimplicit-fallthrough -Wformat=2 -Wvla -march=native
+CFLAGS_COMMON := -std=c23 -Wall -Wextra -Wpedantic -Wstrict-overflow -Wundef -Winline -Wimplicit-fallthrough -Wformat=2 -Wvla -march=native
 CFLAGS_DEBUG := -g --save-temps
-CFLAGS_RELEASE := -O2 -DNDEBUG -Werror -fsanitize=address -fsanitize=bounds --save-temps
+CFLAGS_RELEASE := -O2 -DNDEBUG -Werror -fsanitize=address -fsanitize=bounds
 
 ifeq ($(BUILD_TYPE),release)
 CFLAGS := $(CFLAGS_COMMON) $(CFLAGS_RELEASE)
@@ -30,7 +30,7 @@ CFLAGS := $(CFLAGS_COMMON) $(CFLAGS_DEBUG)
 endif
 
 CPPFLAGS ?= -I$(SRC_DIR)
-CXXFLAGS ?= -std=c++17 -Wall -Wextra -Wpedantic
+CXXFLAGS ?= -std=c++17 -Wall -Wextra -Wpedantic -Wstrict-overflow -Wundef -Winline -Wimplicit-fallthrough -Wformat=2 -Wvla -march=native -Werror
 LDFLAGS ?=
 LDLIBS ?=
 
@@ -48,7 +48,7 @@ endif
 C_SRCS := $(shell test -d $(SRC_DIR) && fd . $(SRC_DIR) -t f -e c 2>/dev/null)
 C_OBJS := $(addsuffix .o,$(basename $(patsubst $(SRC_DIR)/%, $(OBJ_DIR)/%, $(C_SRCS))))
 
-TEST_SRCS := $(shell test -d $(TEST_DIR) && fd -g "*-test.{c,cpp,cxx}" $(TEST_DIR) -t f 2>/dev/null)
+TEST_SRCS := $(shell test -d $(TEST_DIR) && fd -g "*-test.{c,cpp}" $(TEST_DIR) -t f 2>/dev/null)
 TEST_OBJS := $(addsuffix .o,$(basename $(patsubst $(TEST_DIR)/%, $(TEST_OBJ_DIR)/%, $(TEST_SRCS))))
 
 ALL_OBJS := $(C_OBJS) $(TEST_OBJS)
@@ -60,7 +60,7 @@ help: ## Display available targets
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
 # Build core objects without linking
-build: dirs $(C_OBJS) ## Compile project objects
+build: dirs $(C_OBJS)
 
 # Toggle build types on demand
 debug: BUILD_TYPE := debug
@@ -75,34 +75,30 @@ test: $(TEST_BIN)
 	"$(TEST_BIN)"
 else
 test:
-	@echo "error: no GoogleTest sources (*.c/*.cpp/*.cxx) found under '$(TEST_DIR)'" >&2
+	@echo "error: no GoogleTest sources (*.c/*.cpp) found under '$(TEST_DIR)'" >&2
 	@exit 1
 endif
 
 ifneq ($(strip $(TEST_SRCS)),)
 $(TEST_BIN): $(C_OBJS) $(TEST_OBJS)
+	@echo "Running Test_BIN"
 	@mkdir -p $(dir $@)
 	$(CXX) $(LDFLAGS) $^ $(GTEST_LIBS) $(LDLIBS) -o $@
 endif
 
 # Object compilation rules
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@echo "Running OBJ_DIR"
 	@mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -MMD -MP -c $< -o $@
 
 $(TEST_OBJ_DIR)/%.o: $(TEST_DIR)/%.c
-	@mkdir -p $(dir $@)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(GTEST_CFLAGS) -MMD -MP -c $< -o $@
-
-$(TEST_OBJ_DIR)/%.o: $(TEST_DIR)/%.cc
+	@echo "Running TEST_OBJ_DIR"
 	@mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(GTEST_CFLAGS) -MMD -MP -c $< -o $@
 
 $(TEST_OBJ_DIR)/%.o: $(TEST_DIR)/%.cpp
-	@mkdir -p $(dir $@)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(GTEST_CFLAGS) -MMD -MP -c $< -o $@
-
-$(TEST_OBJ_DIR)/%.o: $(TEST_DIR)/%.cxx
+	@echo "Running TEST_OBJ_DIR"
 	@mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(GTEST_CFLAGS) -MMD -MP -c $< -o $@
 
@@ -118,8 +114,8 @@ format: ## Format all source files using clang-format
 		echo "error: clang-format not found, please install it to use this target" >&2; \
 		exit 1; \
 	fi
-	@fd . $(SRC_DIR) -t f -e c -e h 2>/dev/null | xargs clang-format -i
-	@fd -g "*-test.{c,cpp,cxx}" $(TEST_DIR) -t f 2>/dev/null | xargs clang-format -i
+	@fd . $(SRC_DIR) -t f -e c -e h -e cpp 2>/dev/null | xargs clang-format -i
+	@fd -g "*-test.{c,cpp}" $(TEST_DIR) -t f 2>/dev/null | xargs clang-format -i
 
 
 ifneq ($(MAKECMDGOALS),clean)

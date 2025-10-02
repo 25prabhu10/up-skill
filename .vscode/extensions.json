@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "biomejs.biome",
+    "streetsidesoftware.code-spell-checker",
+    "editorconfig.editorconfig",
+    "ms-vscode.makefile-tools",
+    "oxc.oxc-vscode",
+    "yoavbls.pretty-ts-errors",
+    "ms-vscode.cpptools"
+  ]
+}
