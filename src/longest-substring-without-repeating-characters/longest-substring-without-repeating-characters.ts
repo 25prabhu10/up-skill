@@ -1,4 +1,4 @@
-export function lengthOfLongestSubstring(s: string) {
+export function lengthOfLongestSubstring(s: string): number {
   let substring: string[] = []
   let longestSubstring = 0
 
@@ -13,7 +13,7 @@ export function lengthOfLongestSubstring(s: string) {
   return longestSubstring
 }
 
-export function lengthOfLongestSubstringFastest(s: string) {
+export function lengthOfLongestSubstringFastest(s: string): number {
   let left = 0
   let maxLength = 0
   let charSet = new Set()
