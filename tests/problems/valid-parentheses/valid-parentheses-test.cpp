@@ -2,7 +2,7 @@
 #include <string>
 
 extern "C" {
-#include "../../src/valid-parentheses/valid-parentheses.h"
+#include "../../../src/problems/valid-parentheses/valid-parentheses.h"
 }
 
 TEST(test_isValid, case_1) {

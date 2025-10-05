@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { lengthOfLongestSubstring } from '@/longest-substring-without-repeating-characters/longest-substring-without-repeating-characters'
+import { lengthOfLongestSubstring } from '@/problems/longest-substring-without-repeating-characters/longest-substring-without-repeating-characters'
 
 describe('Longest Substring Without Repeating Characters', () => {
   test('should find the lenght of the longest substring without duplicate charaters', () => {

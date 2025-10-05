@@ -2,7 +2,7 @@
 #include <string>
 
 extern "C" {
-#include "../../src/valid-palindrome/valid-palindrome.h"
+#include "../../../src/problems/valid-palindrome/valid-palindrome.h"
 }
 
 TEST(test_isPalindrome, case_1) {

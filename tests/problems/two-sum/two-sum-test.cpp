@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 
 extern "C" {
-#include "../../src/two-sum/two-sum.h"
+#include "../../../src/problems/two-sum/two-sum.h"
 }
 
 TEST(test_twoSum, case_1) {

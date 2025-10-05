@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { hasCycle, ListNode } from '@/linked-list-cycle/linked-list-cycle'
+import { hasCycle, ListNode } from '@/problems/linked-list-cycle/linked-list-cycle'
 
 describe('Linked List Cycle', () => {
   test('should return true if list is cyclic', () => {

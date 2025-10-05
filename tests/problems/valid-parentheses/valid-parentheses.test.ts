@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { isValid } from '@/valid-parentheses/valid-parentheses'
+import { isValid } from '@/problems/valid-parentheses/valid-parentheses'
 
 describe('Valid Parentheses', () => {
   test('should determine if the input string is valid', () => {

@@ -81,24 +81,20 @@ endif
 
 ifneq ($(strip $(TEST_SRCS)),)
 $(TEST_BIN): $(C_OBJS) $(TEST_OBJS)
-	@echo "Running Test_BIN"
 	@mkdir -p $(dir $@)
 	$(CXX) $(LDFLAGS) $^ $(GTEST_LIBS) $(LDLIBS) -o $@
 endif
 
 # Object compilation rules
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	@echo "Running OBJ_DIR"
 	@mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -MMD -MP -c $< -o $@
 
 $(TEST_OBJ_DIR)/%.o: $(TEST_DIR)/%.c
-	@echo "Running TEST_OBJ_DIR"
 	@mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(GTEST_CFLAGS) -MMD -MP -c $< -o $@
 
 $(TEST_OBJ_DIR)/%.o: $(TEST_DIR)/%.cpp
-	@echo "Running TEST_OBJ_DIR"
 	@mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(GTEST_CFLAGS) -MMD -MP -c $< -o $@
 
