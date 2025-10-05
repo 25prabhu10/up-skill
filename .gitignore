@@ -1,5 +1,16 @@
-node_modules
-build
-dist
+node_modules/
+build/
+dist/
 *.log
 .DS_Store
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+wheels/
+*.egg-info
+.ruff_cache
+.pytest_cache
+
+# Virtual environments
+.venv

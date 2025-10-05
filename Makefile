@@ -59,8 +59,7 @@ DEPS := $(ALL_OBJS:.o=.d)
 help: ## Display available targets
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-# Build core objects without linking
-build: dirs $(C_OBJS)
+build: dirs $(C_OBJS) ## Build all source files
 
 # Toggle build types on demand
 debug: BUILD_TYPE := debug
@@ -71,7 +70,7 @@ release: clean build
 
 # Test orchestration
 ifneq ($(strip $(TEST_SRCS)),)
-test: $(TEST_BIN)
+test: $(TEST_BIN) ## Build and run all tests
 	"$(TEST_BIN)"
 else
 test:
