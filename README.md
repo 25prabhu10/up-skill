@@ -1,6 +1,6 @@
 # Up Skill
 
-Learning to solve problems.
+Learning to solve problems, data structures and algorithms.
 
 ## JavaScript/TypeScript
 

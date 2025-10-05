@@ -48,7 +48,7 @@ endif
 C_SRCS := $(shell test -d $(SRC_DIR) && fd . $(SRC_DIR) -t f -e c 2>/dev/null)
 C_OBJS := $(addsuffix .o,$(basename $(patsubst $(SRC_DIR)/%, $(OBJ_DIR)/%, $(C_SRCS))))
 
-TEST_SRCS := $(shell test -d $(TEST_DIR) && fd -g "*-test.{c,cpp}" $(TEST_DIR) -t f 2>/dev/null)
+TEST_SRCS := $(shell test -d $(TEST_DIR) && fd -g "*.test.{c,cpp}" $(TEST_DIR) -t f 2>/dev/null)
 TEST_OBJS := $(addsuffix .o,$(basename $(patsubst $(TEST_DIR)/%, $(TEST_OBJ_DIR)/%, $(TEST_SRCS))))
 
 ALL_OBJS := $(C_OBJS) $(TEST_OBJS)
@@ -111,7 +111,7 @@ format: ## Format all source files using clang-format
 		exit 1; \
 	fi
 	@fd . $(SRC_DIR) -t f -e c -e h -e cpp 2>/dev/null | xargs clang-format -i
-	@fd -g "*-test.{c,cpp}" $(TEST_DIR) -t f 2>/dev/null | xargs clang-format -i
+	@fd -g "*.test.{c,cpp}" $(TEST_DIR) -t f 2>/dev/null | xargs clang-format -i
 
 
 ifneq ($(MAKECMDGOALS),clean)
