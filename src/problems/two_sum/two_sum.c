@@ -1,4 +1,4 @@
-#include "two-sum.h"
+#include "two_sum.h"
 #include <stdlib.h>
 
 int *twoSumBrute(int *nums, int numsSize, int target, int *returnSize) {

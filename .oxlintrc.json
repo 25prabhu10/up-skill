@@ -183,11 +183,12 @@
     "unicorn/filename-case": [
       "error",
       {
-        "case": "kebabCase"
+        "case": "snakeCase"
       }
     ],
     "unicorn/no-abusive-eslint-disable": "error",
     "unicorn/no-accessor-recursion": "error",
+    "unicorn/no-array-callback-reference": "error",
     "unicorn/no-array-method-this-argument": "error",
     "unicorn/no-array-sort": "error",
     "unicorn/no-await-in-promise-methods": "warn",
@@ -200,8 +201,10 @@
     "unicorn/no-process-exit": "error",
     "unicorn/no-single-promise-in-promise-methods": "warn",
     "unicorn/no-thenable": "warn",
+    "unicorn/no-unnecessary-array-splice-count": "error",
     "unicorn/no-unnecessary-await": "warn",
     "unicorn/no-unreadable-array-destructuring": "error",
+    "unicorn/no-useless-error-capture-stack-trace": "error",
     "unicorn/no-useless-fallback-in-spread": "warn",
     "unicorn/no-useless-length-check": "warn",
     "unicorn/no-useless-spread": "warn",
@@ -212,6 +215,7 @@
     "unicorn/prefer-array-find": "error",
     "unicorn/prefer-array-flat-map": "error",
     "unicorn/prefer-array-index-of": "error",
+    "unicorn/prefer-class-fields": "error",
     "unicorn/prefer-dom-node-text-content": "error",
     "unicorn/prefer-includes": "error",
     "unicorn/prefer-logical-operator-over-ternary": "error",
@@ -228,6 +232,8 @@
     "unicorn/prefer-string-starts-ends-with": "warn",
     "unicorn/prefer-string-trim-start-end": "error",
     "unicorn/prefer-structured-clone": "error",
+    "unicorn/prefer-top-level-await": "error",
+    "unicorn/require-module-specifiers": "error",
     "unicorn/require-post-message-target-origin": "error",
     "unicorn/text-encoding-identifier-case": "error",
     "unicorn/throw-new-error": "error",

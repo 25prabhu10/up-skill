@@ -1,4 +1,4 @@
-#include "valid-parentheses.h"
+#include "valid_parentheses.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -2,7 +2,7 @@
 #include <string>
 
 extern "C" {
-#include "../../../src/problems/valid-palindrome/valid-palindrome.h"
+#include "../../../src/problems/valid_palindrome/valid_palindrome.h"
 }
 
 struct ValidPalindromeCase {

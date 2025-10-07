@@ -1,11 +1,13 @@
 {
   "recommendations": [
+    "astral-sh.ty",
     "biomejs.biome",
-    "streetsidesoftware.code-spell-checker",
+    "charliermarsh.ruff",
     "editorconfig.editorconfig",
+    "ms-vscode.cpptools",
     "ms-vscode.makefile-tools",
     "oxc.oxc-vscode",
-    "yoavbls.pretty-ts-errors",
-    "ms-vscode.cpptools"
+    "streetsidesoftware.code-spell-checker",
+    "yoavbls.pretty-ts-errors"
   ]
 }

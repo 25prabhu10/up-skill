@@ -1,4 +1,4 @@
-#include "selection-sort.h"
+#include "selection_sort.h"
 #include <stddef.h>
 
 void selection_sort(int arr[], int size) {

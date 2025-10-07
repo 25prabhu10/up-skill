@@ -3,7 +3,7 @@
 #include <vector>
 
 extern "C" {
-#include "../../../src/algorithms/sort/selection-sort/selection-sort.h"
+#include "../../../src/algorithms/sort/selection_sort/selection_sort.h"
 }
 
 struct SelectionSortCase {

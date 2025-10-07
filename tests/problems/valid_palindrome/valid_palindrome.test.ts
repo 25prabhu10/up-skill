@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { isPalindrome } from '@/problems/valid-palindrome/valid-palindrome'
+import { isPalindrome } from '@/problems/valid_palindrome/valid_palindrome'
 
 describe('Valid Palindrome', () => {
   test('should return true if it is a palindrome, or false otherwise', () => {

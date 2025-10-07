@@ -3,7 +3,7 @@
 #include <vector>
 
 extern "C" {
-#include "../../../src/problems/two-sum/two-sum.h"
+#include "../../../src/problems/two_sum/two_sum.h"
 }
 
 struct TwoSumCase {

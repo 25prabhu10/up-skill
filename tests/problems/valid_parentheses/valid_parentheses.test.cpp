@@ -2,7 +2,7 @@
 #include <string>
 
 extern "C" {
-#include "../../../src/problems/valid-parentheses/valid-parentheses.h"
+#include "../../../src/problems/valid_parentheses/valid_parentheses.h"
 }
 
 struct ValidParenthesesCase {

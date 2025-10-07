@@ -1,4 +1,4 @@
-#include "valid-palindrome.h"
+#include "valid_palindrome.h"
 #include <ctype.h>
 #include <stdbool.h>
 #include <string.h>
