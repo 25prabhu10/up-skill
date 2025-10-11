@@ -124,6 +124,7 @@
     "oxc/bad-min-max-func": "warn",
     "oxc/bad-object-literal-comparison": "warn",
     "oxc/bad-replace-all-arg": "warn",
+    "oxc/branches-sharing-code": "error",
     "oxc/const-comparisons": "warn",
     "oxc/double-comparisons": "warn",
     "oxc/erasing-op": "warn",

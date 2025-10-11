@@ -21,7 +21,7 @@ TEST_BIN := $(BUILD_DIR)/tests/all_tests
 # Compiler flags
 CFLAGS_COMMON := -std=c23 -Wall -Wextra -Wpedantic -Wstrict-overflow -Wundef -Winline -Wimplicit-fallthrough -Wformat=2 -Wvla -march=native
 CFLAGS_DEBUG := -g --save-temps
-CFLAGS_RELEASE := -O2 -DNDEBUG -Werror -fsanitize=address -fsanitize=bounds
+CFLAGS_RELEASE := -O2 -DNDEBUG -Werror #-fsanitize=address -fsanitize=bounds
 
 ifeq ($(BUILD_TYPE),release)
 CFLAGS := $(CFLAGS_COMMON) $(CFLAGS_RELEASE)
