@@ -1,7 +1,6 @@
 {
   "recommendations": [
     "astral-sh.ty",
-    "biomejs.biome",
     "charliermarsh.ruff",
     "editorconfig.editorconfig",
     "ms-vscode.cpptools",

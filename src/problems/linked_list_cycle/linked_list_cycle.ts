@@ -9,7 +9,7 @@
  *     }
  * }
  */
-import type { ListNode } from '@/utils/classes'
+import type { ListNode } from "@/utils/classes"
 
 export function hasCycle(head: ListNode | null): boolean {
   let node = head
@@ -27,7 +27,7 @@ export function hasCycle(head: ListNode | null): boolean {
 }
 
 export function hasCycleFastest(head: ListNode | null): boolean {
-  if (!head || !head.next) {
+  if (!head?.next) {
     return false
   } // no nodes or single node → no cycle
 
@@ -35,7 +35,7 @@ export function hasCycleFastest(head: ListNode | null): boolean {
   let fast: ListNode | null | undefined = head.next
 
   while (slow !== fast) {
-    if (!fast || !fast.next) {
+    if (!fast?.next) {
       return false // reached end → no cycle
     }
     slow = slow?.next
@@ -48,7 +48,7 @@ export function hasCycleFastest(head: ListNode | null): boolean {
 export function hasCycleFastestJS(head: ListNode | null): boolean {
   let slow: ListNode | null | undefined = head
   let fast: ListNode | null | undefined = head
-  while (fast && fast.next) {
+  while (fast?.next) {
     slow = slow?.next
     fast = fast.next.next
     if (slow === fast) {

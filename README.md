@@ -4,27 +4,26 @@ Learning to solve problems, data structures and algorithms.
 
 ## JavaScript/TypeScript
 
-Requirements:
+Requirements any JavaScript/TypeScript runtime is fine, but we recommend using:
 
-- [Node.js](https://nodejs.org/) (version 22 or higher)
-- [pnpm](https://pnpm.io/) (version 10 or higher)
+- [Bun](https://bun.com)
 
 Install dependencies:
 
 ```bash
-pnpm install
+bun install
 ```
 
 Run the unit tests:
 
 ```bash
-pnpm run test
+bun run test
 ```
 
 Generate JavaScript:
 
 ```bash
-pnpm run build
+bun run build
 ```
 
 ## C/C++

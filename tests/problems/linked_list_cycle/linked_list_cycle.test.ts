@@ -1,10 +1,9 @@
-import { describe, expect, test } from 'vitest'
+import { hasCycle } from "@/problems/linked_list_cycle/linked_list_cycle"
+import { ListNode } from "@/utils/classes"
+import { describe, expect, it } from "vitest"
 
-import { hasCycle } from '@/problems/linked_list_cycle/linked_list_cycle'
-import { ListNode } from '@/utils/classes'
-
-describe('Linked List Cycle', () => {
-  test('should return true if list is cyclic', () => {
+describe("linked list cycle", () => {
+  it("should return true if list is cyclic", () => {
     const head1 = new ListNode(3)
     const node12 = new ListNode(2)
     const node13 = new ListNode(0)

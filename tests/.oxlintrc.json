@@ -1,0 +1,5 @@
+{
+  "extends": ["../.oxlintrc.json"],
+  "plugins": ["vitest"],
+  "rules": { "vitest/max-expects": "off" }
+}

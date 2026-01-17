@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "embeddedLanguageFormatting": "auto",
+  "experimentalSortImports": {
+    "internalPattern": ["@/.+"],
+    "groups": [
+      "type-import",
+      ["value-builtin", "value-external"],
+      "type-internal",
+      "value-internal",
+      ["type-parent", "type-sibling", "type-index"],
+      ["value-parent", "value-sibling", "value-index"],
+      "ts-equals-import",
+      "unknown"
+    ]
+  },
+  "experimentalSortPackageJson": true,
+  "ignorePatterns": ["node_modules", "dist", ".cache"],
+  "printWidth": 100,
+  "singleQuote": false,
+  "semi": false,
+  "trailingComma": "es5"
+}

@@ -1,20 +1,16 @@
 {
-  "[css]": { "editor.defaultFormatter": "biomejs.biome" },
-  "[graphql]": { "editor.defaultFormatter": "biomejs.biome" },
-  "[javascript]": { "editor.defaultFormatter": "biomejs.biome" },
-  "[javascriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
-  "[json]": { "editor.defaultFormatter": "biomejs.biome" },
-  "[jsonc]": { "editor.defaultFormatter": "biomejs.biome" },
-  "[typescript]": { "editor.defaultFormatter": "biomejs.biome" },
-  "[typescriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
-  "biome.requireConfiguration": true,
-  "cSpell.words": ["bitonic", "subarray"],
+  "[javascript]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "[json]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "[jsonc]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "[typescript]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "cSpell.words": ["bitonic", "oxlint", "subarray"],
   "editor.codeActionsOnSave": {
-    "source.action.useSortedKeys.biome": "explicit",
-    "source.fixAll.biome": "explicit",
-    "source.organizeImports.biome": "explicit"
+    "source.fixAll.oxc": "explicit",
+    "source.fixAll.ts": "explicit"
   },
+  "oxc.enable": true,
+  "oxc.typeAware": true,
   "editor.formatOnPaste": true,
   "editor.formatOnSave": true,
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "typescript.experimental.useTsgo": true
 }

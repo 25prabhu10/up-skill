@@ -1,29 +1,30 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "declaration": true,
     "emitDeclarationOnly": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    "lib": ["es2023"],
-    "module": "preserve",
+    "lib": ["ESNext"],
+    "module": "Preserve",
     "moduleDetection": "force",
     "moduleResolution": "bundler",
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
+    "noPropertyAccessFromIndexSignature": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "paths": {
       "@/*": ["./src/*"]
     },
     "resolveJsonModule": true,
+    "noEmit": true,
     "skipLibCheck": true,
     "strict": true,
-    "target": "esnext",
-    "types": ["node"],
+    "target": "ESNext",
+    "types": ["bun"],
     "verbatimModuleSyntax": true
   },
-  "exclude": ["node_modules"],
-  "include": ["src", "tests"]
+  "exclude": ["node_modules", "dist", ".git", "packages", ".venv", ".ruff_cache"],
+  "include": ["src", "tests", "built.ts", "dev.ts", "vitest.config.ts"]
 }

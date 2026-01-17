@@ -1,10 +1,9 @@
-import { describe, expect, test } from 'vitest'
+import { mergeTwoLists } from "@/problems/merge_two_sorted_lists/merge_two_sorted_lists"
+import { ListNode } from "@/utils/classes"
+import { describe, expect, it } from "vitest"
 
-import { mergeTwoLists } from '@/problems/merge_two_sorted_lists/merge_two_sorted_lists'
-import { ListNode } from '@/utils/classes'
-
-describe('Merge Two Sorted Lists', () => {
-  test('should return the head of the merged linked list', () => {
+describe("merge two sorted lists", () => {
+  it("should return the head of the merged linked list", () => {
     const head1 = new ListNode(1, new ListNode(2, new ListNode(4)))
     const head2 = new ListNode(1, new ListNode(3, new ListNode(4)))
 
@@ -19,7 +18,7 @@ describe('Merge Two Sorted Lists', () => {
     expect(result).toStrictEqual(expected)
   })
 
-  test('should return the head of the merged linked list with single items', () => {
+  it("should return the head of the merged linked list with single items", () => {
     const head1 = new ListNode(1, null)
     const head2 = new ListNode(2, null)
 
@@ -34,7 +33,7 @@ describe('Merge Two Sorted Lists', () => {
     expect(result).toStrictEqual(expected)
   })
 
-  test('should return the head of the merged empty linked list', () => {
+  it("should return the head of the merged empty linked list", () => {
     let resultHead = mergeTwoLists(null, null)
     const result: number[] = []
     const expected: number[] = []
@@ -46,7 +45,7 @@ describe('Merge Two Sorted Lists', () => {
     expect(result).toStrictEqual(expected)
   })
 
-  test('should return the head of the merged empty linked list and non-empty linked list', () => {
+  it("should return the head of the merged empty linked list and non-empty linked list", () => {
     let resultHead = mergeTwoLists(null, new ListNode(0))
     const result: number[] = []
     const expected: number[] = [0]

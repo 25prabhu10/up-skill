@@ -2,7 +2,7 @@ export function lengthOfLongestSubstring(s: string): number {
   let substring: string[] = []
   let longestSubstring = 0
 
-  for (let i = 0; i < s.length; i++) {
+  for (let i = 0; i < s.length; i += 1) {
     if (substring.includes(s[i])) {
       substring = substring.slice(substring.indexOf(s[i]) + 1)
     }
@@ -18,10 +18,10 @@ export function lengthOfLongestSubstringFastest(s: string): number {
   let maxLength = 0
   let charSet = new Set()
 
-  for (let right = 0; right < s.length; right++) {
+  for (let right = 0; right < s.length; right += 1) {
     while (charSet.has(s[right])) {
       charSet.delete(s[left])
-      left++
+      left += 1
     }
 
     charSet.add(s[right])

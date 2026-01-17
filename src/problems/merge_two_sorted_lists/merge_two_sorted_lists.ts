@@ -9,7 +9,7 @@
  *     }
  * }
  */
-import { ListNode } from '@/utils/classes'
+import { ListNode } from "@/utils/classes"
 
 export function mergeTwoLists(list1: ListNode | null, list2: ListNode | null): ListNode | null {
   if (list1 === null) {
@@ -67,6 +67,6 @@ export function mergeTwoListsFastestJS(
     }
     curr = curr.next
   }
-  curr.next = list1 || list2
+  curr.next = list1 ?? list2
   return resultSt.next
 }
