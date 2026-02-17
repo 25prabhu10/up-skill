@@ -1,7 +1,7 @@
 package main
 
-import "25prabhu10/up-skill/cli/cmd"
+import "github.com/25prabhu10/up-skill/cmd/cli"
 
 func main() {
-	cmd.Execute()
+	cli.GetRootCmd().Execute()
 }

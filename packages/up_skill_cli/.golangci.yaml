@@ -1,0 +1,39 @@
+version: "2"
+
+linters:
+  # Default set of linters.
+  # The value can be:
+  # - `standard`: https://golangci-lint.run/docs/linters/#enabled-by-default
+  # - `all`: enables all linters by default.
+  # - `none`: disables all linters by default.
+  # - `fast`: enables only linters considered as "fast" (`golangci-lint help linters --json | jq '[ .[] | select(.fast==true) ] | map(.name)'`).
+  # Default: standard
+  default: all
+  disable:
+    - depguard
+    - wsl
+    - varnamelen
+    - exhaustruct
+    - wrapcheck
+    - noinlineerr
+    - nlreturn
+    - revive
+    - gochecknoglobals
+    - funlen
+    - cyclop
+    - nonamedreturns
+    - lll
+  settings:
+    mnd:
+      ignored-numbers:
+        - '0750'
+        - '0600'
+issues:
+  # Maximum issues count per one linter.
+  # Set to 0 to disable.
+  # Default: 50
+  max-issues-per-linter: 0
+  # Maximum count of issues with the same text.
+  # Set to 0 to disable.
+  # Default: 3
+  max-same-issues: 0
