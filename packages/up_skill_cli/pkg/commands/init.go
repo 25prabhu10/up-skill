@@ -1,0 +1,90 @@
+package commands
+
+import (
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/25prabhu10/up-skill/internal/config"
+	"github.com/25prabhu10/up-skill/internal/program"
+	"github.com/25prabhu10/up-skill/internal/ui"
+	"github.com/25prabhu10/up-skill/internal/utils"
+	"github.com/spf13/cobra"
+)
+
+var (
+	ErrConfigExists    = errors.New("config file already exists")
+	ErrConfigPathIsDir = errors.New("config file path is a directory")
+)
+
+var (
+	configOutputDir string
+	force           bool
+	cfg             *config.Config = config.GetDefaultConfig()
+)
+
+// NewInitCmd creates the init subcommand for initializing up-skill configuration.
+func NewInitCmd() *cobra.Command {
+	var initCmd = &cobra.Command{
+		Use:   "init",
+		Short: "Initialize a configuration file",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if err := cobra.MaximumNArgs(1)(cmd, args); err != nil {
+				return err
+			}
+
+			// create directory structure
+			if len(args) == 1 {
+				// check if the output path exists and is a directory
+				configOutputDir = args[0]
+				return utils.CreateDirectoryIfNotExists(configOutputDir)
+			}
+
+			return nil
+		},
+		Long: fmt.Sprintf(`Initialize creates a configuration file for up-skill.
+
+It creates a local config file "%s" in the current directory.`, config.DEFAULT_CONFIG_FILE_NAME),
+		RunE: runConfigInitializerE,
+	}
+
+	initCmd.Flags().BoolVar(&force, "force", false, "allow write operations that overwrite files")
+	initCmd.Flags().StringVarP(&cfg.Author, "author", "a", cfg.Author, "author name")
+
+	return initCmd
+}
+
+// runConfigInitializerE executes the logic for the init command, creating a config file with default settings.
+func runConfigInitializerE(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
+
+	userUI := ui.FromContext(ctx)
+	app := program.FromContext(ctx)
+
+	configFilePath := config.DEFAULT_CONFIG_FILE_NAME
+	if configOutputDir != "" {
+		configFilePath = filepath.Join(configOutputDir, configFilePath)
+	}
+
+	overwrite := false
+
+	if force {
+		userUI.Warningf("existing config will be overwritten (--force)")
+
+		overwrite = true
+	} else {
+		// check if config file already exists
+		if _, err := os.Stat(configFilePath); err == nil {
+			return fmt.Errorf("%w at %s (use --force to overwrite)", ErrConfigExists, configFilePath)
+		}
+	}
+
+	if err := app.CreateNewConfig(cfg, configFilePath, overwrite); err != nil {
+		return fmt.Errorf("failed to create config: %w", err)
+	}
+
+	userUI.Infof("initialized up-skill with default config at %s", configFilePath)
+
+	return nil
+}

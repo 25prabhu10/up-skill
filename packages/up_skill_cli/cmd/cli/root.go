@@ -1,68 +1,86 @@
+// Package commands implements the CLI commands for up-skill using Cobra.
+//
+// It provides the root command and all subcommands with proper flag handling,
+// configuration management, and logging.
 package cli
 
 import (
 	"fmt"
-	"log"
-	"log/slog"
 	"os"
 
 	"github.com/25prabhu10/up-skill/internal/config"
-	"github.com/25prabhu10/up-skill/pkg/buildinfo"
+	"github.com/25prabhu10/up-skill/internal/program"
+	"github.com/25prabhu10/up-skill/internal/ui"
+	"github.com/25prabhu10/up-skill/pkg/build_info"
+	"github.com/25prabhu10/up-skill/pkg/commands"
 
 	"github.com/spf13/cobra"
 )
 
+// variables to hold flag values
 var (
-	verbose bool
-	quiet   bool
-	cfgFile string
+	flagCfgFile string
+	flagVerbose bool
+	flagQuiet   bool
 )
 
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
-	Use:     buildinfo.AppName,
-	Short:   "A CLI program to scaffold files for different languages.",
-	Long:    `This CLI tool helps you scaffold files for different programming languages and frameworks. `,
-	Version: buildinfo.Version,
-	Example: `  ` + buildinfo.AppName + ` "Inverse Binary Tree"`,
+	Use:               build_info.AppName,
+	Short:             "A CLI program to scaffold files for different languages.",
+	Long:              `This CLI tool helps you scaffold files for different programming languages and frameworks. It supports multiple languages and provides a simple interface to generate boilerplate code for your projects.`,
+	Version:           fmt.Sprintf("%s (%s) built at %s", build_info.Version, build_info.GitCommit, build_info.BuildDate),
+	SilenceUsage:      true,
+	PersistentPreRunE: initApp,
+	Example:           `  ` + build_info.AppName + ` "Inverse Binary Tree"`,
 }
 
-func GetRootCmd() *cobra.Command {
-	return rootCmd
-}
-
+// Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		log.Fatal(err)
 		os.Exit(1)
 	}
 }
 
-func init() {
-	// Initialize configuration after cobra is initialized
-	cobra.OnInitialize(initConfig)
-
-	// Persistent flags
-	configMsg := fmt.Sprintf("config file (default %s,%s)", config.DEFAULT_CONFIG_FILE_NAME, config.GetDefaultConfigPath())
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", configMsg)
-
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
-	rootCmd.PersistentFlags().BoolVar(&quiet, "quiet", false, "suppress non-error output")
+// GetRootCmd returns the root Cobra command.
+func GetRootCmd() *cobra.Command {
+	return rootCmd
 }
 
-func initConfig() {
-	cfg, err := config.Load(cfgFile)
-	if err != nil {
-		log.Fatalf("Error loading config: %v", err)
+// init function is called automatically when the package is imported. It sets up the Cobra command and flags.
+func init() {
+	// Persistent flags
+	configMsg := fmt.Sprintf("config file (default %s or %s)", config.DEFAULT_CONFIG_FILE_NAME, config.GetDefaultConfigPath())
+	rootCmd.PersistentFlags().StringVar(&flagCfgFile, "config", "", configMsg)
+
+	rootCmd.PersistentFlags().BoolVarP(&flagVerbose, "verbose", "v", false, "verbose output")
+	rootCmd.PersistentFlags().BoolVarP(&flagQuiet, "quiet", "q", false, "suppress non-error output")
+
+	// register subcommands
+	rootCmd.AddCommand(commands.GetLlmCommand())
+	rootCmd.AddCommand(commands.NewInitCmd())
+}
+
+// initApp initializes the application context and sets it in the root command. This allows all subcommands to access the program instance and configuration.
+func initApp(cmd *cobra.Command, args []string) error {
+	if flagVerbose && flagQuiet {
+		return fmt.Errorf("cannot use --verbose and --quiet flags together")
 	}
 
-	// Set log level based on config and flags
-	if quiet {
-		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError})))
-	} else if verbose {
-		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})))
-	} else {
-		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: cfg.LogLevel})))
-	}
+	app, err := program.New(flagCfgFile, flagVerbose, flagQuiet)
+	cobra.CheckErr(err)
 
-	slog.Info("Configuration loaded", "file", cfgFile)
+	// create user interface (writes to stdout for user-facing messages).
+	userUI := ui.New(ui.WithQuiet(flagQuiet))
+
+	// store data in context for access in subcommands
+	ctx := cmd.Context()
+
+	ctx = program.WithProgram(ctx, app)
+	ctx = ui.WithUI(ctx, userUI)
+
+	// set the context in the root command so that it can be accessed by subcommands
+	cmd.SetContext(ctx)
+
+	return nil
 }

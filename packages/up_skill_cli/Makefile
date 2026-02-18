@@ -29,7 +29,7 @@ GO_BUILD := CGO_ENABLED=0 $(GO) build -trimpath
 GO_LINT := $(shell command -v golangci-lint 2> /dev/null)
 
 # Linker flags
-PKG := "$(shell $(GO) list -m)/pkg/buildinfo"
+PKG := "$(shell $(GO) list -m)/pkg/build_info"
 LDFLAGS := -X $(PKG).AppName=$(BINARY_NAME) \
 	   -X $(PKG).Version=$(VERSION) \
 	   -X $(PKG).GitCommit=$(GIT_COMMIT) \
