@@ -6,14 +6,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/25prabhu10/up-skill/cmd/cli"
-	"github.com/25prabhu10/up-skill/internal/config"
-	"github.com/25prabhu10/up-skill/internal/utils"
-	"github.com/25prabhu10/up-skill/pkg/build_info"
-	"github.com/25prabhu10/up-skill/pkg/commands"
+	"github.com/25prabhu10/scaffy/cmd/cli"
+	"github.com/25prabhu10/scaffy/internal/config"
+	"github.com/25prabhu10/scaffy/internal/utils"
+	"github.com/25prabhu10/scaffy/pkg/build_info"
+	"github.com/25prabhu10/scaffy/pkg/commands"
 )
 
-const testAppName = "up-skill"
+const testAppName = "scaffy"
 
 func init() {
 	build_info.AppName = testAppName

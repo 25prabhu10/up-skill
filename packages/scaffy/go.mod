@@ -1,4 +1,4 @@
-module github.com/25prabhu10/up-skill
+module github.com/25prabhu10/scaffy
 
 go 1.25.1
 

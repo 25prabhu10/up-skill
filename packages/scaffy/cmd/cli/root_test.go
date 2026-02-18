@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/25prabhu10/up-skill/cmd/cli"
-	"github.com/25prabhu10/up-skill/internal/utils"
-	"github.com/25prabhu10/up-skill/pkg/build_info"
+	"github.com/25prabhu10/scaffy/cmd/cli"
+	"github.com/25prabhu10/scaffy/internal/utils"
+	"github.com/25prabhu10/scaffy/pkg/build_info"
 )
 
 func TestRootCmd_HelpText(t *testing.T) {

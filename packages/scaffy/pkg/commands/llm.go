@@ -8,8 +8,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/25prabhu10/up-skill/internal/ui"
-	"github.com/25prabhu10/up-skill/internal/utils"
+	"github.com/25prabhu10/scaffy/internal/ui"
+	"github.com/25prabhu10/scaffy/internal/utils"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"

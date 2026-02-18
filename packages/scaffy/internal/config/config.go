@@ -1,4 +1,4 @@
-// Package config provides configuration management for the up-skill CLI tool.
+// Package config provides configuration management for the scaffy CLI tool.
 //
 // It handles loading, saving, and validating configuration from files and
 // environment variables using Viper for configuration management with support
@@ -14,8 +14,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/25prabhu10/up-skill/internal/utils"
-	"github.com/25prabhu10/up-skill/pkg/build_info"
+	"github.com/25prabhu10/scaffy/internal/utils"
+	"github.com/25prabhu10/scaffy/pkg/build_info"
 	"github.com/spf13/viper"
 )
 
@@ -35,7 +35,7 @@ const CONFIG_FORMAT = "json"
 // DEFAULT_CONFIG_FILE_NAME is the default configuration file name.
 var DEFAULT_CONFIG_FILE_NAME = build_info.AppName + "." + CONFIG_FORMAT
 
-// Config represents the up-skill configuration settings. It can be loaded from a
+// Config represents the scaffy configuration settings. It can be loaded from a
 // JSON file or environment variables prefixed with UP_SKILL_.
 type Config struct {
 	Author       string            `mapstructure:"author"`
@@ -120,8 +120,8 @@ func AllLogLevelsStr() string {
 
 // LoadConfigFromDefaultFile loads configuration from the default search paths.
 // It searches for config files in the following order:
-//  1. Current directory (./up-skill.json)
-//  2. XDG config directory (~/.config/up-skill/up-skill.json)
+//  1. Current directory (./scaffy.json)
+//  2. XDG config directory (~/.config/scaffy/scaffy.json)
 //
 // If no config file is found, it returns an error.
 // Environment variables with UP_SKILL_ prefix can override config values.

@@ -9,8 +9,8 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/25prabhu10/up-skill/internal/config"
-	"github.com/25prabhu10/up-skill/internal/logger"
+	"github.com/25prabhu10/scaffy/internal/config"
+	"github.com/25prabhu10/scaffy/internal/logger"
 )
 
 // contextKey is a private type for context keys to avoid collisions.
@@ -43,7 +43,7 @@ func New(configFile string, verbose bool, quiet bool) (*Program, error) {
 }
 
 func (p *Program) CreateNewConfig(cfg *config.Config, configFile string, force bool) error {
-	p.logger.Debug("initializing up-skill config", "path", configFile, "force", force)
+	p.logger.Debug("initializing scaffy config", "path", configFile, "force", force)
 
 	if err := cfg.Save(configFile, force); err != nil {
 		return err

@@ -6,10 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/25prabhu10/up-skill/internal/config"
-	"github.com/25prabhu10/up-skill/internal/program"
-	"github.com/25prabhu10/up-skill/internal/ui"
-	"github.com/25prabhu10/up-skill/internal/utils"
+	"github.com/25prabhu10/scaffy/internal/config"
+	"github.com/25prabhu10/scaffy/internal/program"
+	"github.com/25prabhu10/scaffy/internal/ui"
+	"github.com/25prabhu10/scaffy/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +23,7 @@ var (
 	cfg   *config.Config = config.GetDefaultConfig()
 )
 
-// NewInitCmd creates the init subcommand for initializing up-skill configuration.
+// NewInitCmd creates the init subcommand for initializing scaffy configuration.
 func NewInitCmd() *cobra.Command {
 	var initCmd = &cobra.Command{
 		Use:   "init",
@@ -41,7 +41,7 @@ func NewInitCmd() *cobra.Command {
 
 			return nil
 		},
-		Long: fmt.Sprintf(`Initialize creates a configuration file for up-skill.
+		Long: fmt.Sprintf(`Initialize creates a configuration file for scaffy.
 
 It creates a local config file "%s" in the current directory.`, config.DEFAULT_CONFIG_FILE_NAME),
 		RunE: runConfigInitializerE,
@@ -89,7 +89,7 @@ func runConfigInitializerE(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create config: %w", err)
 	}
 
-	userUI.Infof("initialized up-skill with default config at %s", configFilePath)
+	userUI.Infof("initialized scaffy with default config at %s", configFilePath)
 
 	return nil
 }

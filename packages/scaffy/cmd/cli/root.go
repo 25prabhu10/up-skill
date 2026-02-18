@@ -1,4 +1,4 @@
-// Package cli implements the CLI commands for up-skill using Cobra.
+// Package cli implements the CLI commands for scaffy using Cobra.
 //
 // It provides the root command and all subcommands with proper flag handling,
 // configuration management, and logging.
@@ -8,11 +8,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/25prabhu10/up-skill/internal/config"
-	"github.com/25prabhu10/up-skill/internal/program"
-	"github.com/25prabhu10/up-skill/internal/ui"
-	"github.com/25prabhu10/up-skill/pkg/build_info"
-	"github.com/25prabhu10/up-skill/pkg/commands"
+	"github.com/25prabhu10/scaffy/internal/config"
+	"github.com/25prabhu10/scaffy/internal/program"
+	"github.com/25prabhu10/scaffy/internal/ui"
+	"github.com/25prabhu10/scaffy/pkg/build_info"
+	"github.com/25prabhu10/scaffy/pkg/commands"
 
 	"github.com/spf13/cobra"
 )

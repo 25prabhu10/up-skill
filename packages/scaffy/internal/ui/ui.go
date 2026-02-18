@@ -1,4 +1,4 @@
-// Package ui provides POSIX-compliant user-facing output for the up-skill CLI.
+// Package ui provides POSIX-compliant user-facing output for the scaffy CLI.
 //
 // All diagnostic and user feedback messages are written to stderr, leaving
 // stdout free for program output that may be piped to other tools.

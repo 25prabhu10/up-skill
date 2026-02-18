@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/25prabhu10/up-skill/internal/logger"
+	"github.com/25prabhu10/scaffy/internal/logger"
 )
 
 // TestNew verifies logger creation with different configurations.

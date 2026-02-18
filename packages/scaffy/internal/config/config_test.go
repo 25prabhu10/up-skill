@@ -9,13 +9,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/25prabhu10/up-skill/internal/config"
-	"github.com/25prabhu10/up-skill/internal/utils"
-	"github.com/25prabhu10/up-skill/pkg/build_info"
+	"github.com/25prabhu10/scaffy/internal/config"
+	"github.com/25prabhu10/scaffy/internal/utils"
+	"github.com/25prabhu10/scaffy/pkg/build_info"
 	"github.com/spf13/viper"
 )
 
-const testAppName = "up-skill"
+const testAppName = "scaffy"
 
 func init() {
 	build_info.AppName = testAppName
@@ -394,7 +394,7 @@ func TestLoadConfigFromDefaultFile_FoundInCurrentDir(t *testing.T) { //nolint:pa
 
 	cfg := config.GetDefaultConfig()
 	cfg.Author = "current-dir-author"
-	configPath := filepath.Join(tmpDir, "up-skill.json")
+	configPath := filepath.Join(tmpDir, "scaffy.json")
 	if err := cfg.Save(configPath, false); err != nil {
 		t.Fatalf("failed to save config: %v", err)
 	}
@@ -437,7 +437,7 @@ func TestEnsureDefaultConfig(t *testing.T) { //nolint:paralleltest // t.Setenv u
 		t.Fatal("expected non-nil config")
 	}
 
-	configPath := filepath.Join(config.GetDefaultConfigDir(), "up-skill.json")
+	configPath := filepath.Join(config.GetDefaultConfigDir(), "scaffy.json")
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		t.Errorf("expected config file at %s", configPath)
 	}

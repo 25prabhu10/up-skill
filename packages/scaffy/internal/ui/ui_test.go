@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/25prabhu10/up-skill/internal/ui"
+	"github.com/25prabhu10/scaffy/internal/ui"
 )
 
 // TestNew verifies UI creation with different options.

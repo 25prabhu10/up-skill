@@ -1,4 +1,4 @@
-// Package logger provides structured logging functionality for the up-skill CLI.
+// Package logger provides structured logging functionality for the scaffy CLI.
 //
 // It uses the standard library's log/slog package for structured logging with
 // support for different log levels and output formats. Technical logs are

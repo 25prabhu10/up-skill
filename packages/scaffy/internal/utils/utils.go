@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/25prabhu10/up-skill/internal/constants"
+	"github.com/25prabhu10/scaffy/internal/constants"
 )
 
 // utils errors.

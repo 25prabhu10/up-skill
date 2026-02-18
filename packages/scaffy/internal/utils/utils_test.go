@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/25prabhu10/up-skill/internal/utils"
+	"github.com/25prabhu10/scaffy/internal/utils"
 )
 
 func TestIsStringEmpty(t *testing.T) {
