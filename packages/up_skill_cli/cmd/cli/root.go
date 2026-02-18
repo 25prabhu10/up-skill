@@ -53,7 +53,7 @@ func GetRootCmd() *cobra.Command {
 // init function is called automatically when the package is imported. It sets up the Cobra command and flags.
 func init() { //nolint:gochecknoinits // init is used to set up the root command
 	// Persistent flags
-	configMsg := fmt.Sprintf("config file (default %s or %s)", config.DEFAULT_CONFIG_FILE_NAME, config.GetDefaultConfigPath())
+	configMsg := fmt.Sprintf("config file (default locations: %s, %s)", config.DEFAULT_CONFIG_FILE_NAME, config.GetDefaultConfigPath())
 	rootCmd.PersistentFlags().StringVar(&flagCfgFile, "config", "", configMsg)
 
 	rootCmd.PersistentFlags().BoolVarP(&flagVerbose, "verbose", "v", false, "verbose output")

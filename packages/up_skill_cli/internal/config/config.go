@@ -158,7 +158,7 @@ func (c *Config) Save(path string, overwrite bool) error {
 		return v.WriteConfigAs(path)
 	}
 
-	return viper.SafeWriteConfigAs(path)
+	return v.SafeWriteConfigAs(path)
 }
 
 // EnsureDefaultConfig creates a default configuration file if none exists.
@@ -194,7 +194,9 @@ func setDefaultConfigValues(c *Config) *viper.Viper {
 func readConfig() (*Config, error) {
 	setViperDefaults()
 
-	viper.SetEnvPrefix(strings.ToUpper(build_info.AppName))
+	viper.SetEnvPrefix(strings.ToUpper(utils.NormalizeString(build_info.AppName)))
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {

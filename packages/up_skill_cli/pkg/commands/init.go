@@ -19,9 +19,8 @@ var (
 )
 
 var (
-	configOutputDir string
-	force           bool
-	cfg             *config.Config = config.GetDefaultConfig()
+	force bool
+	cfg   *config.Config = config.GetDefaultConfig()
 )
 
 // NewInitCmd creates the init subcommand for initializing up-skill configuration.
@@ -37,8 +36,7 @@ func NewInitCmd() *cobra.Command {
 			// create directory structure
 			if len(args) == 1 {
 				// check if the output path exists and is a directory
-				configOutputDir = args[0]
-				return utils.CreateDirectoryIfNotExists(configOutputDir)
+				return utils.CreateDirectoryIfNotExists(args[0])
 			}
 
 			return nil
@@ -50,7 +48,13 @@ It creates a local config file "%s" in the current directory.`, config.DEFAULT_C
 	}
 
 	initCmd.Flags().BoolVar(&force, "force", false, "allow write operations that overwrite files")
+
+	// config overrides
 	initCmd.Flags().StringVarP(&cfg.Author, "author", "a", cfg.Author, "author name")
+	initCmd.Flags().StringToStringVar(&cfg.Languages, "lang", cfg.Languages, "programming languages to generate (e.g. --lang ruby=rb,python=py)")
+	initCmd.Flags().StringVar(&cfg.LogLevel, "log-level", cfg.LogLevel, "logrus log level (e.g., debug, info, warn, error)")
+	initCmd.Flags().StringVar(&cfg.OutputDir, "output-dir", cfg.OutputDir, "directory to output generated code")
+	initCmd.Flags().StringVar(&cfg.TemplatesDir, "templates-dir", cfg.TemplatesDir, "directory containing template files")
 
 	return initCmd
 }
@@ -63,8 +67,9 @@ func runConfigInitializerE(cmd *cobra.Command, args []string) error {
 	app := program.FromContext(ctx)
 
 	configFilePath := config.DEFAULT_CONFIG_FILE_NAME
-	if configOutputDir != "" {
-		configFilePath = filepath.Join(configOutputDir, configFilePath)
+
+	if len(args) > 0 {
+		configFilePath = filepath.Join(args[0], configFilePath)
 	}
 
 	overwrite := false

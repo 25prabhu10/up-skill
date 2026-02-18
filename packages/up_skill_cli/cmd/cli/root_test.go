@@ -64,20 +64,18 @@ func TestRootCmd_PersistentFlagsRegistered(t *testing.T) {
 }
 
 func TestRootCmd_SubcommandsRegistered(t *testing.T) {
-	t.Parallel()
-
 	cmd := cli.GetRootCmd()
 
-	hasInit := false
+	subcommands := []string{"init"}
+	registeredCommands := make(map[string]bool)
 
 	for _, c := range cmd.Commands() {
-		switch c.Name() {
-		case "init":
-			hasInit = true
-		}
+		registeredCommands[c.Name()] = true
 	}
 
-	if !hasInit {
-		t.Fatal("expected init subcommand to be registered")
+	for _, required := range subcommands {
+		if !registeredCommands[required] {
+			t.Fatalf("expected %q subcommand to be registered", required)
+		}
 	}
 }
