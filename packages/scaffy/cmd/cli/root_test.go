@@ -1,7 +1,7 @@
 package cli_test
 
 import (
-	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/25prabhu10/scaffy/cmd/cli"
@@ -18,7 +18,7 @@ func TestRootCmd_HelpText(t *testing.T) {
 	}
 
 	output := buf.String()
-	if !bytes.Contains([]byte(output), []byte("This CLI tool helps you scaffold files for different programming languages and frameworks.")) {
+	if !strings.Contains(output, "This CLI tool helps you scaffold files for different programming languages and frameworks.") {
 		t.Errorf("unexpected help output: %s", output)
 	}
 }
@@ -63,7 +63,7 @@ func TestRootCmd_PersistentFlagsRegistered(t *testing.T) {
 	}
 }
 
-func TestRootCmd_SubcommandsRegistered(t *testing.T) {
+func TestRootCmd_SubcommandsRegistered(t *testing.T) { //nolint:paralleltest // subcommand registration is not parallelizable
 	cmd := cli.GetRootCmd()
 
 	subcommands := []string{"init"}

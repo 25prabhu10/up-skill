@@ -5,9 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"os"
-
-	"github.com/spf13/viper"
 
 	"github.com/25prabhu10/scaffy/internal/config"
 	"github.com/25prabhu10/scaffy/internal/logger"
@@ -79,8 +76,7 @@ func loadConfiguration(configFile string, verbose bool, quiet bool) (*config.Con
 	cfg, err := loadConfig(configFile)
 	if err != nil {
 		// if config not found, try to create default config
-		var configNotFoundErr viper.ConfigFileNotFoundError
-		if errors.As(err, &configNotFoundErr) || errors.Is(err, os.ErrNotExist) {
+		if errors.Is(err, config.ErrConfigNotFound) {
 			var createErr error
 
 			cfg, createErr = config.EnsureDefaultConfig()

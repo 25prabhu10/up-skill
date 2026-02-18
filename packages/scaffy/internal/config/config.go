@@ -12,11 +12,32 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
+
+	"github.com/spf13/viper"
 
 	"github.com/25prabhu10/scaffy/internal/utils"
 	"github.com/25prabhu10/scaffy/pkg/build_info"
-	"github.com/spf13/viper"
+)
+
+// Error variables for configuration-related errors.
+var (
+	// ErrConfigNotFound indicates no configuration file was found and no
+	// environment-based configuration was provided.
+	ErrConfigNotFound = errors.New("config not found")
+	// ErrReadConfig indicates configuration could not be read or unmarshaled.
+	ErrReadConfig = errors.New("failed to read config")
+	// ErrInvalidConfig indicates configuration values are invalid.
+	ErrInvalidConfig = errors.New("invalid config")
+	// ErrNilConfig indicates a nil Config pointer was provided where a non-nil value is required.
+	ErrNilConfig = errors.New("config is nil")
+	// ErrInvalidLogLevel indicates the log level specified in the configuration is not valid.
+	ErrInvalidLogLevel = errors.New("invalid log-level")
+	// ErrLanguageEmpty indicates the language is empty in the configuration.
+	ErrLanguageEmpty = errors.New("language cannot be empty")
+	// ErrFileExtensionEmpty indicates a language file extension in the configuration is empty.
+	ErrFileExtensionEmpty = errors.New("language file extension cannot be empty")
 )
 
 // Log Levels.
@@ -35,8 +56,17 @@ const CONFIG_FORMAT = "json"
 // DEFAULT_CONFIG_FILE_NAME is the default configuration file name.
 var DEFAULT_CONFIG_FILE_NAME = build_info.AppName + "." + CONFIG_FORMAT
 
+// configuration keys.
+const (
+	keyAuthor       = "author"
+	keyLanguages    = "languages"
+	keyLogLevel     = "log-level"
+	keyOutputDir    = "output-dir"
+	keyTemplatesDir = "templates-dir"
+)
+
 // Config represents the scaffy configuration settings. It can be loaded from a
-// JSON file or environment variables prefixed with UP_SKILL_.
+// JSON file or environment variables prefixed with SCAFFY_.
 type Config struct {
 	Author       string            `mapstructure:"author"`
 	Languages    map[string]string `mapstructure:"languages"`
@@ -49,7 +79,7 @@ type Config struct {
 func GetDefaultConfig() *Config {
 	return &Config{
 		Author:       "",
-		Languages:    *GetDefaultLanguages(),
+		Languages:    GetDefaultLanguages(),
 		LogLevel:     logLevelError,
 		OutputDir:    currentDir,
 		TemplatesDir: "",
@@ -94,8 +124,8 @@ func GetDefaultConfigDir() string {
 }
 
 // GetDefaultLanguages returns the default list of supported programming languages.
-func GetDefaultLanguages() *map[string]string {
-	return &map[string]string{
+func GetDefaultLanguages() map[string]string {
+	return map[string]string{
 		"go":         "go",
 		"c":          "c",
 		"python":     "py",
@@ -124,28 +154,34 @@ func AllLogLevelsStr() string {
 //  2. XDG config directory (~/.config/scaffy/scaffy.json)
 //
 // If no config file is found, it returns an error.
-// Environment variables with UP_SKILL_ prefix can override config values.
+// Environment variables with SCAFFY_ prefix can override config values.
 func LoadConfigFromDefaultFile() (*Config, error) {
-	viper.AddConfigPath(currentDir)
-	viper.AddConfigPath(GetDefaultConfigDir())
-	viper.SetConfigType(CONFIG_FORMAT)
-	viper.SetConfigName(build_info.AppName)
+	v := newReadViper()
+	v.AddConfigPath(currentDir)
+	v.AddConfigPath(GetDefaultConfigDir())
+	v.SetConfigType(CONFIG_FORMAT)
+	v.SetConfigName(build_info.AppName)
 
-	return readConfig()
+	return readConfig(v)
 }
 
 // LoadConfigFromFile loads configuration from the specified file path.
-// Environment variables with UP_SKILL_ prefix can override config values.
+// Environment variables with SCAFFY_ prefix can override config values.
 func LoadConfigFromFile(path string) (*Config, error) {
-	viper.SetConfigFile(path)
+	v := newReadViper()
+	v.SetConfigFile(path)
 
-	return readConfig()
+	return readConfig(v)
 }
 
 // Save saves the configuration to the specified file path.
 // If overwrite is true, it will overwrite an existing file; otherwise, it
 // returns an error.
 func (c *Config) Save(path string, overwrite bool) error {
+	if err := c.Validate(); err != nil {
+		return fmt.Errorf("%w: %w", ErrInvalidConfig, err)
+	}
+
 	v := setDefaultConfigValues(c)
 
 	configDir := filepath.Dir(path)
@@ -175,15 +211,51 @@ func EnsureDefaultConfig() (*Config, error) {
 	return cfg, nil
 }
 
+// Validate validates the configuration values.
+func (c *Config) Validate() error {
+	if c == nil {
+		return ErrNilConfig
+	}
+
+	c.LogLevel = strings.ToLower(strings.TrimSpace(c.LogLevel))
+
+	if !isValidLogLevel(c.LogLevel) {
+		return fmt.Errorf("%w: '%s', must be one of: %s", ErrInvalidLogLevel, c.LogLevel, AllLogLevelsStr())
+	}
+
+	for language, extension := range c.Languages {
+		if utils.IsStringEmpty(strings.TrimSpace(language)) {
+			return ErrLanguageEmpty
+		}
+
+		if utils.IsStringEmpty(strings.TrimSpace(extension)) {
+			return ErrFileExtensionEmpty
+		}
+	}
+
+	return nil
+}
+
 // setDefaultConfigValues sets default values in a viper instance based on the provided Config struct. This is used to ensure that all config fields have
 // default values when saving or validating the config.
 func setDefaultConfigValues(c *Config) *viper.Viper {
 	v := viper.New()
-	v.Set("author", c.Author)
-	v.Set("languages", c.Languages)
-	v.Set("log-level", c.LogLevel)
-	v.Set("output-dir", c.OutputDir)
-	v.Set("templates-dir", c.TemplatesDir)
+	v.Set(keyAuthor, c.Author)
+	v.Set(keyLanguages, c.Languages)
+	v.Set(keyLogLevel, c.LogLevel)
+	v.Set(keyOutputDir, c.OutputDir)
+	v.Set(keyTemplatesDir, c.TemplatesDir)
+
+	return v
+}
+
+func newReadViper() *viper.Viper {
+	v := viper.New()
+	setViperDefaults(v)
+
+	v.SetEnvPrefix(strings.ToUpper(utils.NormalizeString(build_info.AppName)))
+	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	v.AutomaticEnv()
 
 	return v
 }
@@ -191,42 +263,50 @@ func setDefaultConfigValues(c *Config) *viper.Viper {
 // readConfig reads and unmarshals the configuration from a viper
 // instance. It returns an error if the config file is not found or cannot be
 // read.
-func readConfig() (*Config, error) {
-	setViperDefaults()
-
-	viper.SetEnvPrefix(strings.ToUpper(utils.NormalizeString(build_info.AppName)))
-	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-
-	viper.AutomaticEnv()
-
-	if err := viper.ReadInConfig(); err != nil {
-		var configNotFound viper.ConfigFileNotFoundError
-		if ok := os.IsNotExist(err); ok || errors.As(err, &configNotFound) {
+func readConfig(v *viper.Viper) (*Config, error) {
+	if err := v.ReadInConfig(); err != nil {
+		if isConfigNotFound(err) {
 			return nil, fmt.Errorf("config file not found: %w", err)
 		}
 
-		return nil, fmt.Errorf("failed to read config: %w", err)
+		return nil, fmt.Errorf("%w: %w", ErrReadConfig, err)
 	}
 
 	var cfg Config
-	if err := viper.Unmarshal(&cfg); err != nil {
-		return nil, fmt.Errorf("error unmarshaling config: %w", err)
+	if err := v.Unmarshal(&cfg); err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrReadConfig, err)
 	}
 
-	// if err := cfg.Validate(); err != nil {
-	// 	return nil, fmt.Errorf("invalid options: %w", err)
-	// }
+	normalizeConfig(&cfg)
+
+	if err := cfg.Validate(); err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrInvalidConfig, err)
+	}
 
 	return &cfg, nil
 }
 
+func isConfigNotFound(err error) bool {
+	var configNotFound viper.ConfigFileNotFoundError
+
+	return os.IsNotExist(err) || errors.As(err, &configNotFound)
+}
+
+func normalizeConfig(cfg *Config) {
+	cfg.LogLevel = strings.ToLower(strings.TrimSpace(cfg.LogLevel))
+}
+
+func isValidLogLevel(level string) bool {
+	return slices.Contains(validLogLevels, level)
+}
+
 // setViperDefaults sets default values in a viper instance for all config
 // fields.
-func setViperDefaults() {
+func setViperDefaults(v *viper.Viper) {
 	defaults := GetDefaultConfig()
-	viper.SetDefault("languages", defaults.Languages)
-	viper.SetDefault("output-dir", defaults.OutputDir)
-	viper.SetDefault("templates-dir", defaults.TemplatesDir)
-	viper.SetDefault("author", defaults.Author)
-	viper.SetDefault("log-level", defaults.LogLevel)
+	v.SetDefault(keyLanguages, defaults.Languages)
+	v.SetDefault(keyOutputDir, defaults.OutputDir)
+	v.SetDefault(keyTemplatesDir, defaults.TemplatesDir)
+	v.SetDefault(keyAuthor, defaults.Author)
+	v.SetDefault(keyLogLevel, defaults.LogLevel)
 }

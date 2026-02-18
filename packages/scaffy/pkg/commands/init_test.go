@@ -15,7 +15,7 @@ import (
 
 const testAppName = "scaffy"
 
-func init() {
+func init() { //nolint:gochecknoinits // needed to set test constants before tests run
 	build_info.AppName = testAppName
 	config.DEFAULT_CONFIG_FILE_NAME = testAppName + ".json"
 }
@@ -128,6 +128,7 @@ func TestInitCommand_AlreadyExists(t *testing.T) { //nolint:paralleltest // `t.C
 			if tt.force {
 				args = append(args, "--force")
 			}
+
 			_, cliBuf, err := utils.ExecuteTestCommandWithContext(t, cli.GetRootCmd(), args, false, false)
 
 			if tt.force {
