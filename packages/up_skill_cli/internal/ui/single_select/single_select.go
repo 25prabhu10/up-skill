@@ -1,10 +1,11 @@
 package single_select
 
 import (
-	"25prabhu10/up-skill/cli/internal/options"
-	"25prabhu10/up-skill/cli/internal/ui/theme"
 	"fmt"
 	"io"
+	"strings"
+
+	"github.com/25prabhu10/up-skill/internal/ui/theme"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -12,9 +13,23 @@ import (
 )
 
 const (
-	listWidth     = 24
-	minListHeight = 5
+	listWidth = 24
 )
+
+type Option string
+
+func (o Option) Title() string {
+	return string(o)
+}
+
+func (o Option) Description() string {
+	return ""
+}
+
+type Item struct {
+	title Option
+	desc  string
+}
 
 type Output struct {
 	Output string
@@ -30,36 +45,39 @@ func (d itemDelegate) Height() int                             { return 1 }
 func (d itemDelegate) Spacing() int                            { return 0 }
 func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
 func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
+	var bodyLines strings.Builder
+
 	var (
 		title, desc string
 	)
 
-	if i, ok := listItem.(options.Item); ok {
-		title = i.Title()
-		desc = i.Description()
-	} else {
-		return
-	}
+	// if i, ok := listItem.(Item); ok {
+	// 	title = i.Title()
+	// 	desc = i.Description()
+	// } else {
+	// 	return
+	// }
 
 	if m.Width() <= 0 {
 		// short-circuit
 		return
 	}
 
-	textWidth := m.Width() - theme.Default.ListItem.GetPaddingLeft() - theme.Default.ListItem.GetPaddingRight()
-	var str string
+	styles := theme.DefaultStyles()
+
+	textWidth := m.Width() - styles.ListItem.GetPaddingLeft() - styles.ListItem.GetPaddingRight()
 	if index == m.Index() {
-		title = theme.Default.ListSelectedHeader.Render(ansi.Truncate(title, textWidth, "…"))
-		desc = theme.Default.ListSelectedDesc.Render(desc)
-		arrow := theme.Default.ListArrow.Render(">")
-		str = theme.Default.ListSelectedItem.Render(fmt.Sprintf("%s %d. %s\n   %s", arrow, index+1, title, desc))
+		bodyLines.WriteString(styles.ListArrow.Render("> "))
+		bodyLines.WriteString(styles.ListSelectedHeader.Render(ansi.Truncate(title, textWidth, "…")))
+		bodyLines.WriteString("\n")
+		bodyLines.WriteString(styles.ListItemDesc.Render(desc))
 	} else {
-		title = theme.Default.ListHeader.Render(ansi.Truncate(title, textWidth, "…"))
-		desc = theme.Default.ListItemDesc.Render(desc)
-		str = theme.Default.ListItem.Render(fmt.Sprintf("%d. %s\n   %s", index+1, title, desc))
+		bodyLines.WriteString(styles.ListItemHeader.Render(ansi.Truncate(title, textWidth, "…")))
+		bodyLines.WriteString("\n")
+		bodyLines.WriteString(styles.ListItemDesc.Render(desc))
 	}
 
-	fmt.Fprint(w, str)
+	fmt.Fprint(w, styles.ListItem.Render(bodyLines.String()))
 }
 
 type model struct {
@@ -83,10 +101,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "esc", "q", "ctrl+c":
 			return m, tea.Quit
 		case "enter":
-			i, ok := m.list.SelectedItem().(options.Item)
-			if ok {
-				m.output.update(i.Title())
-			}
+			// i, ok := m.list.SelectedItem().(Item)
+			// if ok {
+			// 	m.output.update(i.Title())
+			// }
 			return m, tea.Quit
 		}
 	}
@@ -104,17 +122,15 @@ func (m model) View() string {
 }
 
 func InitializeModel(userOptions *[]list.Item, title *string, output *Output) *model {
-	height := len(*userOptions) * 5
+	height := (len(*userOptions) * 2) + 4
 
 	m := model{
 		list:   list.New(*userOptions, itemDelegate{}, listWidth, height),
 		output: output,
 	}
-
 	m.list.Title = *title
 	m.list.SetShowStatusBar(false)
-
-	m.list.Styles.Title = theme.Default.ListTitle
-
+	m.list.Styles.Title = theme.DefaultStyles().ListTitle
+	m.list.Styles.TitleBar = theme.DefaultStyles().ListTitleBar
 	return &m
 }

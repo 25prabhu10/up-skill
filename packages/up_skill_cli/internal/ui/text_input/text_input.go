@@ -1,11 +1,12 @@
 package textinput
 
 import (
-	"25prabhu10/up-skill/cli/internal/program"
-	"25prabhu10/up-skill/cli/internal/ui/theme"
 	"errors"
 	"fmt"
 	"unicode/utf8"
+
+	"github.com/25prabhu10/up-skill/internal/program"
+	"github.com/25prabhu10/up-skill/internal/ui/theme"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -25,7 +26,7 @@ func (o *Output) update(val string) {
 	o.Output = val
 }
 
-type model struct {
+type Model struct {
 	textInput textinput.Model
 	output    *Output
 	err       error
@@ -33,11 +34,11 @@ type model struct {
 	exit      *bool
 }
 
-func (m model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -62,92 +63,91 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m Model) View() string {
 	return fmt.Sprintf("\n%s\n\n%s\n\n", m.header, m.textInput.View())
 }
 
-func (m model) Err() string {
+func (m Model) Err() string {
 	if m.err == nil {
 		return ""
 	}
 	return m.err.Error()
 }
 
-func InitialTextInputModel(output *Output, header string, initialStr string) *model {
+func InitialTextInputModel(output *Output, header string, initialStr string) *Model {
 	ti := newTextInputModel(defaultPlaceholder, initialStr)
 	exit := false
 
-	return &model{
+	return &Model{
 		textInput: ti,
 		output:    output,
-		header:    theme.Default.Title.Render(header),
+		header:    theme.DefaultStyles().Header.Render(header),
 		err:       nil,
 		exit:      &exit,
 	}
 }
 
-func InitialTextInputModelWithPlaceholder(output *Output, header string, initialStr string, placeholder string) *model {
+func InitialTextInputModelWithPlaceholder(output *Output, header string, initialStr string, placeholder string) *Model {
 	ti := newTextInputModel(placeholder, initialStr)
 	exit := false
 
-	return &model{
+	return &Model{
 		textInput: ti,
 		output:    output,
-		header:    theme.Default.Title.Render(header),
+		header:    theme.DefaultStyles().Header.Render(header),
 		err:       nil,
 		exit:      &exit,
 	}
 }
 
-func InitialTextInputTopicModel(output *Output, header string, program *program.Topic, initialStr string) *model {
+func InitialTextInputTopicModel(output *Output, header string, program *program.Program, initialStr string) *Model {
 	ti := newTextInputModel(defaultPlaceholder, initialStr)
 
-	return &model{
+	return &Model{
 		textInput: ti,
 		output:    output,
-		header:    theme.Default.Title.Render(header),
+		header:    theme.DefaultStyles().Header.Render(header),
 		err:       nil,
-		exit:      &program.Exit,
+		exit:      nil,
 	}
 }
 
-func InitialTextInputTopicModelWithPlaceholder(output *Output, header string, program *program.Topic, initialStr string, placeholder string) *model {
+func InitialTextInputTopicModelWithPlaceholder(output *Output, header string, program *program.Program, initialStr string, placeholder string) *Model {
 	ti := newTextInputModel(placeholder, initialStr)
 
-	return &model{
+	return &Model{
 		textInput: ti,
 		output:    output,
-		header:    theme.Default.Title.Render(header),
+		header:    theme.DefaultStyles().Header.Render(header),
 		err:       nil,
-		exit:      &program.Exit,
+		exit:      nil,
 	}
 }
 
-func CreateErrorInputModel(err error) *model {
+func CreateErrorInputModel(err error) *Model {
 	ti := newTextInputModel("", "")
 	exit := true
 
-	return &model{
+	return &Model{
 		textInput: ti,
 		output:    nil,
 		header:    "",
-		err:       errors.New(theme.Default.Error.Render(err.Error())),
+		err:       errors.New(theme.DefaultStyles().Error.Render(err.Error())),
 		exit:      &exit,
 	}
 }
 
 func newTextInputModel(placeholder string, initialStr string) textinput.Model {
 	ti := textinput.New()
-	ti.Focus()
-	ti.CharLimit = 156
-	ti.Width = 20
-
-	ti.PromptStyle = theme.Default.InputPrompt
+	ti.CharLimit = 512
 	ti.Placeholder = placeholder
 
 	if initialStr != "" {
 		ti.SetValue(initialStr)
 	}
 
+	styles := theme.DefaultStyles()
+	ti.PromptStyle = styles.Prompt
+	ti.Focus()
 	return ti
 }

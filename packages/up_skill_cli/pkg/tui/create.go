@@ -1,15 +1,16 @@
-package cmd
+package tui
 
 import (
-	"25prabhu10/up-skill/cli/internal/program"
-	"25prabhu10/up-skill/cli/internal/ui/text_input"
-	"25prabhu10/up-skill/cli/internal/utils"
 	"fmt"
 	"log"
 	"strings"
 
+	textinput "github.com/25prabhu10/up-skill/internal/ui/text_input"
+
+	"github.com/25prabhu10/up-skill/internal/program"
+
 	// "github.com/25prabhu10/up-skill/pkg/options"
-	// multiSelect "github.com/25prabhu10/up-skill/cli/internal/ui/multi_select"
+	// multiSelect "github.com/25prabhu10/up-skill/internal/ui/multi_select"
 	// tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )
@@ -45,15 +46,15 @@ var createCmd = &cobra.Command{
 		name = strings.TrimSpace(args[0])
 		flagOutput = strings.TrimSpace(flagOutput)
 
-		if name == "" || (name != "" && !utils.ValidateName(name)) {
+		if name == "" { // || (name != "" && !utils.ValidateName(name)) {
 			err = fmt.Errorf("'%s' is not a valid topic name. Please choose a different name (string length 1 to 255 chars)", name)
 			cobra.CheckErr(textinput.CreateErrorInputModel(err).Err())
 		}
 
-		if !flagInteractive && flagOutput == "" {
-			err = fmt.Errorf("'%s' is not a valid output path. Please choose a different output path", flagOutput)
-			cobra.CheckErr(textinput.CreateErrorInputModel(err).Err())
-		}
+		// if !flagInteractive && flagOutput == "" {
+		// 	err = fmt.Errorf("'%s' is not a valid output path. Please choose a different output path", flagOutput)
+		// 	cobra.CheckErr(textinput.CreateErrorInputModel(err).Err())
+		// }
 
 		fmt.Printf("Tags: %s --> %v\n", flagLanguage, flagLanguages)
 
@@ -74,10 +75,10 @@ var createCmd = &cobra.Command{
 		// 	// Language:   &multiSelect.Selection{},
 		// }
 
-		topic := &program.Topic{
-			Name:      name,
-			Output:    flagOutput,
-			Languages: flagLanguages,
+		topic := &program.Program{
+			// Name:      name,
+			// Output:    flagOutput,
+			// Languages: flagLanguages,
 		}
 
 		// if flagInteractive {
@@ -132,7 +133,7 @@ var createCmd = &cobra.Command{
 		// 	// }
 
 		// } else {
-		topic.Name = utils.NormalizeName(topic.Name)
+		// topic.Name = utils.NormalizeName(topic.Name)
 		// }
 
 		fmt.Printf("Topic: %+v", topic)
@@ -143,7 +144,7 @@ var createCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(createCmd)
+	// rootCmd.AddCommand(createCmd)
 
 	createCmd.Flags().StringVarP(&flagOutput, "output", "o", "./src", "path of the output directory")
 	createCmd.Flags().StringVarP(&flagLanguage, "language", "l", "", "") // fmt.Sprintf("languages (repeatable) [allowed: %s]", strings.Join(options.AllowedLanguageTypes, ", ")))
