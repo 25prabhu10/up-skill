@@ -32,7 +32,7 @@ var (
 // CONFIG_FORMAT is the configuration file format.
 const CONFIG_FORMAT = "json"
 
-// DEFAULT_CONFIG_FILE is the default configuration file name.
+// DEFAULT_CONFIG_FILE_NAME is the default configuration file name.
 var DEFAULT_CONFIG_FILE_NAME = build_info.AppName + "." + CONFIG_FORMAT
 
 // Config represents the up-skill configuration settings. It can be loaded from a
@@ -93,7 +93,7 @@ func GetDefaultConfigDir() string {
 	return filepath.Join(userConfigDir, build_info.AppName)
 }
 
-// DefaultLanguages returns the default list of supported programming languages.
+// GetDefaultLanguages returns the default list of supported programming languages.
 func GetDefaultLanguages() *map[string]string {
 	return &map[string]string{
 		"go":         "go",

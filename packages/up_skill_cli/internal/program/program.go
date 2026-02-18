@@ -50,6 +50,7 @@ func (p *Program) CreateNewConfig(cfg *config.Config, configFile string, force b
 	}
 
 	p.logger.Debug("config initialization completed", "path", configFile, "force", force)
+
 	return nil
 }
 

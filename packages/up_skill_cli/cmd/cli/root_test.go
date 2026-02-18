@@ -13,7 +13,6 @@ func TestRootCmd_HelpText(t *testing.T) {
 	t.Parallel()
 
 	buf, err := utils.ExecuteTestCommand(t, cli.GetRootCmd(), []string{"--help"})
-
 	if err != nil {
 		t.Fatalf("failed to execute root command: %v", err)
 	}

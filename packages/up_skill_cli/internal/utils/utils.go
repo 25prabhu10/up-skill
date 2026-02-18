@@ -11,7 +11,7 @@ import (
 	"github.com/25prabhu10/up-skill/internal/constants"
 )
 
-// utils errors
+// utils errors.
 var (
 	ErrPathIsDir = errors.New("path is a directory")
 )

@@ -2,6 +2,7 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"slices"
@@ -12,6 +13,12 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
+)
+
+// llm command errors.
+var (
+	ErrInvalidOutputPath = errors.New("error: invalid output path. Please choose a different output path")
+	ErrInvalidDocFormat  = errors.New("error: invalid documentation format")
 )
 
 // Documentation formats supported by the llm command.
@@ -43,11 +50,11 @@ func GetLlmCommand() *cobra.Command {
 		Long:  `This command generates documentation for the CLI in a format that can be easily consumed by language models. It supports multiple output formats, including Markdown, Man, and ReStructuredText. The generated documentation includes details about each command, its flags, and usage examples.`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if utils.IsStringEmpty(flagDocOutputPath) {
-				return fmt.Errorf("'%s' is not a valid output path. Please choose a different output path", flagDocOutputPath)
+				return fmt.Errorf("%w: %q", ErrInvalidOutputPath, flagDocOutputPath)
 			}
 
 			if !slices.Contains(allowedDocFormats, flagDocFormat) {
-				return fmt.Errorf("'%s' is not a valid format. Please choose a different format (%s)", flagDocFormat, allowedDocFormatsStr)
+				return fmt.Errorf("%w. '%s': (%s)", ErrInvalidDocFormat, flagDocFormat, allowedDocFormatsStr)
 			}
 
 			return nil
@@ -83,10 +90,10 @@ func runLlmCommandE(cmd *cobra.Command, args []string) error {
 				base := filepath.Base(filename)
 				name := strings.TrimSuffix(base, filepath.Ext(base))
 				title := strings.ReplaceAll(name, "_", " ")
+
 				return fmt.Sprintf("---\ntitle: %q\nslug: %q\ndescription: \"CLI reference for %s\"\n---\n\n", title, name, title)
 			}
-			link := func(name string) string { return strings.ToLower(name) }
-			if err := doc.GenMarkdownTreeCustom(root, flagDocOutputPath, prep, link); err != nil {
+			if err := doc.GenMarkdownTreeCustom(root, flagDocOutputPath, prep, strings.ToLower); err != nil {
 				return fmt.Errorf("error in generating markdown docs with frontmatter: %w", err)
 			}
 		} else {
@@ -102,10 +109,9 @@ func runLlmCommandE(cmd *cobra.Command, args []string) error {
 	case "rest":
 		if err := doc.GenReSTTree(root, flagDocOutputPath); err != nil {
 			return fmt.Errorf("error in generating reStructuredText docs: %w", err)
-
 		}
 	default:
-		return fmt.Errorf("unsupported doc format: %s", flagDocFormat)
+		return fmt.Errorf("%w: %s", ErrInvalidDocFormat, flagDocFormat)
 	}
 
 	userUI.Infof("generated documentation for CLI at %s in %s format", flagDocOutputPath, flagDocFormat)

@@ -137,13 +137,13 @@ func TestNormalizeString(t *testing.T) {
 	}
 }
 
-func TestCreateDirectoryIfNotExists(t *testing.T) {
+func TestCreateDirectoryIfNotExists(t *testing.T) { //nolint:tparallel,paralleltest // `t.Chdir` does not support
 	tempDir := t.TempDir()
 	t.Chdir(tempDir)
 
 	// create a test file
 	testFilePath := "testfile.txt"
-	if err := os.WriteFile(testFilePath, []byte("test content"), 0644); err != nil {
+	if err := os.WriteFile(testFilePath, []byte("test content"), 0600); err != nil {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
