@@ -26,8 +26,8 @@ linters:
   settings:
     mnd:
       ignored-numbers:
-        - '0750'
-        - '0600'
+        - "0750"
+        - "0600"
 issues:
   # Maximum issues count per one linter.
   # Set to 0 to disable.

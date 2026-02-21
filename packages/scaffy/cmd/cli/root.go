@@ -11,6 +11,7 @@ import (
 	"github.com/25prabhu10/scaffy/internal/config"
 	"github.com/25prabhu10/scaffy/internal/program"
 	"github.com/25prabhu10/scaffy/internal/ui"
+	"github.com/25prabhu10/scaffy/internal/utils"
 	"github.com/25prabhu10/scaffy/pkg/build_info"
 	"github.com/25prabhu10/scaffy/pkg/commands"
 
@@ -31,13 +32,15 @@ var (
 
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
-	Use:               build_info.AppName,
-	Short:             "A CLI program to scaffold files for different languages.",
-	Long:              `This CLI tool helps you scaffold files for different programming languages and frameworks. It supports multiple languages and provides a simple interface to generate boilerplate code for your projects.`,
-	Version:           fmt.Sprintf("%s (%s) built at %s", build_info.Version, build_info.GitCommit, build_info.BuildDate),
+	Use:   build_info.APP_NAME,
+	Short: "A CLI program to scaffold files for different languages.",
+	Long: `This CLI tool helps you scaffold files for different programming languages and
+frameworks. It supports multiple languages and provides a simple interface to
+generate boilerplate code for your projects.`,
+	Version:           fmt.Sprintf("%s (%s) built at %s", build_info.VERSION, build_info.GIT_COMMIT, build_info.BUILD_DATE),
 	SilenceUsage:      true,
 	PersistentPreRunE: initApp,
-	Example:           `  ` + build_info.AppName + ` "Inverse Binary Tree"`,
+	Example:           `  ` + build_info.APP_NAME + ` "Inverse Binary Tree"`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -53,7 +56,7 @@ func GetRootCmd() *cobra.Command {
 // init function is called automatically when the package is imported. It sets up the Cobra command and flags.
 func init() { //nolint:gochecknoinits // init is used to set up the root command
 	// Persistent flags
-	configMsg := fmt.Sprintf("config file (default locations: %s, %s)", config.DEFAULT_CONFIG_FILE_NAME, config.GetDefaultConfigPath())
+	configMsg := fmt.Sprintf("config file (default locations: %s, %s)", config.DEFAULT_CONFIG_FILE_NAME, config.GetDefaultConfigPath(utils.NewOSInfo()))
 	rootCmd.PersistentFlags().StringVar(&flagCfgFile, "config", "", configMsg)
 
 	rootCmd.PersistentFlags().BoolVarP(&flagVerbose, "verbose", "v", false, "verbose output")

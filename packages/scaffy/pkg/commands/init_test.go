@@ -16,7 +16,7 @@ import (
 const testAppName = "scaffy"
 
 func init() { //nolint:gochecknoinits // needed to set test constants before tests run
-	build_info.AppName = testAppName
+	build_info.APP_NAME = testAppName
 	config.DEFAULT_CONFIG_FILE_NAME = testAppName + ".json"
 }
 
@@ -40,19 +40,28 @@ func TestNewInitCmd(t *testing.T) {
 
 func TestInitCommand_CreateNew(t *testing.T) { //nolint:paralleltest // `t.Chdir` does not support parallel tests
 	tests := []struct {
-		name       string
-		args       []string
-		outputFile string
+		name          string
+		args          []string
+		outputFile    string
+		errorExpected bool
 	}{
 		{
-			name:       "current dir",
-			args:       []string{},
-			outputFile: config.DEFAULT_CONFIG_FILE_NAME,
+			name:          "current dir",
+			args:          []string{},
+			outputFile:    config.DEFAULT_CONFIG_FILE_NAME,
+			errorExpected: false,
 		},
 		{
-			name:       "custom dir",
-			args:       []string{"docs"},
-			outputFile: filepath.Join("docs", config.DEFAULT_CONFIG_FILE_NAME),
+			name:          "custom dir",
+			args:          []string{"docs"},
+			outputFile:    filepath.Join("docs", config.DEFAULT_CONFIG_FILE_NAME),
+			errorExpected: false,
+		},
+		{
+			name:          "extra args",
+			args:          []string{"docs", "extra"},
+			outputFile:    filepath.Join("docs", config.DEFAULT_CONFIG_FILE_NAME),
+			errorExpected: true,
 		},
 	}
 
@@ -69,12 +78,16 @@ func TestInitCommand_CreateNew(t *testing.T) { //nolint:paralleltest // `t.Chdir
 			args := append([]string{"--config", baseConfigPath, "init"}, tt.args...)
 
 			_, _, err := utils.ExecuteTestCommandWithContext(t, cli.GetRootCmd(), args, false, false)
-			if err != nil {
+			if tt.errorExpected {
+				if err == nil {
+					t.Fatalf("expected error, got none")
+				}
+			} else if err != nil {
 				t.Fatalf("expected no error, got %v", err)
-			}
 
-			if _, err := os.Stat(tt.outputFile); os.IsNotExist(err) {
-				t.Errorf("expected config file at %s", tt.outputFile)
+				if _, err := os.Stat(tt.outputFile); os.IsNotExist(err) {
+					t.Errorf("expected config file at %s", tt.outputFile)
+				}
 			}
 		})
 	}
@@ -159,7 +172,7 @@ func TestInitCommand_FlagPersistsToConfig(t *testing.T) { //nolint:paralleltest 
 	languages := "ruby=rb,python=py"
 	logLevel := "debug"
 	outputDir := "generated"
-	templatesDir := "my-templates"
+	templatesDir := tmpDir
 
 	args := []string{configDir, "--author", author, "--lang", languages, "--log-level", logLevel, "--output-dir", outputDir, "--templates-dir", templatesDir}
 	configFilePath := filepath.Join(configDir, config.DEFAULT_CONFIG_FILE_NAME)

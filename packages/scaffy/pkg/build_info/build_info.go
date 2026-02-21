@@ -1,8 +1,8 @@
 package build_info
 
 var (
-	AppName   string
-	Version   string
-	GitCommit string
-	BuildDate string
+	APP_NAME   string
+	VERSION    string
+	GIT_COMMIT string
+	BUILD_DATE string
 )

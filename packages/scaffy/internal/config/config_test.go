@@ -23,8 +23,25 @@ const (
 	goosIOS       = "ios"
 )
 
+type MockOSInfo struct {
+	MockGOOS          string
+	MockUserConfigDir string
+}
+
+func (m *MockOSInfo) GetOS() string {
+	return m.MockGOOS
+}
+
+func (m *MockOSInfo) GetUserConfigDir() (string, error) {
+	if m.MockUserConfigDir != "" {
+		return m.MockUserConfigDir, nil
+	}
+
+	return "", os.ErrNotExist
+}
+
 func init() { //nolint:gochecknoinits // needed to set test constants before tests run
-	build_info.AppName = testAppName
+	build_info.APP_NAME = testAppName
 	config.DEFAULT_CONFIG_FILE_NAME = testAppName + ".json"
 }
 
@@ -130,33 +147,112 @@ func TestAllLogLevelsStr(t *testing.T) {
 func TestGetDefaultConfigDir(t *testing.T) {
 	t.Parallel()
 
-	dir := config.GetDefaultConfigDir()
-	if utils.IsStringEmpty(dir) {
-		t.Error("expected non-empty config directory")
+	home, _ := os.UserHomeDir()
+	expectedValue := filepath.Join(home, ".config")
+
+	tests := []struct {
+		name           string
+		os             string
+		userConfigDir  string
+		expectedSubstr string
+	}{
+		{
+			name:           "windows with user config dir",
+			os:             goosWindows,
+			userConfigDir:  "C:\\Users\\TestUser\\AppData\\Roaming",
+			expectedSubstr: "C:\\Users\\TestUser\\AppData\\Roaming",
+		},
+		{
+			name:           "darwin with user config dir",
+			os:             goosDarwin,
+			userConfigDir:  "/Users/testuser/Library/Application Support",
+			expectedSubstr: "/Users/testuser/Library/Application Support",
+		},
+		{
+			name:           "linux with user config dir",
+			os:             "linux",
+			userConfigDir:  "/home/testuser/.config",
+			expectedSubstr: "/home/testuser/.config",
+		},
+		{
+			name:           "windows without user config dir",
+			os:             goosWindows,
+			userConfigDir:  "",
+			expectedSubstr: expectedValue,
+		},
+		{
+			name:           "darwin without user config dir",
+			os:             goosDarwin,
+			userConfigDir:  "",
+			expectedSubstr: expectedValue,
+		},
+		{
+			name:           "linux without user config dir",
+			os:             "linux",
+			userConfigDir:  "",
+			expectedSubstr: expectedValue,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			dir := config.GetDefaultConfigDir(&MockOSInfo{MockGOOS: tt.os, MockUserConfigDir: tt.userConfigDir})
+			if utils.IsStringEmpty(dir) {
+				t.Error("expected non-empty config directory")
+			}
+
+			if !strings.Contains(dir, tt.expectedSubstr) {
+				t.Errorf("expected config directory to contain %q, got %q", tt.expectedSubstr, dir)
+			}
+		})
 	}
 }
 
 func TestGetDefaultConfigPath(t *testing.T) {
 	t.Parallel()
 
-	path := config.GetDefaultConfigPath()
-	if utils.IsStringEmpty(path) {
-		t.Error("expected non-empty config path")
+	tests := []struct {
+		name           string
+		os             string
+		expectedSubstr string
+	}{
+		{
+			name:           "windows",
+			os:             goosWindows,
+			expectedSubstr: "%USERPROFILE%",
+		},
+		{
+			name:           "darwin",
+			os:             goosDarwin,
+			expectedSubstr: "$HOME",
+		},
+		{
+			name:           "ios",
+			os:             goosIOS,
+			expectedSubstr: "$HOME",
+		},
+		{
+			name:           "linux",
+			os:             "linux",
+			expectedSubstr: "$XDG_CONFIG_HOME",
+		},
 	}
 
-	switch runtime.GOOS {
-	case goosWindows:
-		if !strings.Contains(path, "%USERPROFILE%") {
-			t.Errorf("expected path to contain %%USERPROFILE%%, got %q", path)
-		}
-	case goosDarwin, goosIOS:
-		if !strings.Contains(path, "$HOME") {
-			t.Errorf("expected path to contain $HOME, got %q", path)
-		}
-	default:
-		if !strings.Contains(path, "$XDG_CONFIG_HOME") {
-			t.Errorf("expected path to contain $XDG_CONFIG_HOME, got %q", path)
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			path := config.GetDefaultConfigPath(&MockOSInfo{MockGOOS: tt.os})
+			if utils.IsStringEmpty(path) {
+				t.Error("expected non-empty config path")
+			}
+
+			if !strings.Contains(path, tt.expectedSubstr) {
+				t.Errorf("expected path to contain %q, got %q", tt.expectedSubstr, path)
+			}
+		})
 	}
 }
 
@@ -171,7 +267,7 @@ func TestSaveAndLoadConfig(t *testing.T) {
 	cfg := config.GetDefaultConfig()
 	cfg.Author = "test-author"
 	cfg.OutputDir = "/custom/output"
-	cfg.TemplatesDir = "/custom/templates"
+	cfg.TemplatesDir = tmpDir
 	cfg.LogLevel = logLevelDebug
 
 	if err := cfg.Save(path, false); err != nil {
@@ -191,8 +287,8 @@ func TestSaveAndLoadConfig(t *testing.T) {
 		t.Errorf("expected OutputDir '/custom/output', got %q", loaded.OutputDir)
 	}
 
-	if loaded.TemplatesDir != "/custom/templates" {
-		t.Errorf("expected TemplatesDir '/custom/templates', got %q", loaded.TemplatesDir)
+	if loaded.TemplatesDir != tmpDir {
+		t.Errorf("expected TemplatesDir '%s', got %q", tmpDir, loaded.TemplatesDir)
 	}
 
 	if loaded.LogLevel != "debug" {
@@ -224,7 +320,7 @@ func TestSaveAndLoadConfig_AllFields(t *testing.T) { //nolint:paralleltest // us
 			cfg: &config.Config{
 				Author:       "test-user",
 				OutputDir:    "/tmp/output",
-				TemplatesDir: "/tmp/templates",
+				TemplatesDir: "",
 				LogLevel:     "debug",
 				Languages:    map[string]string{"go": "go", "python": "py", "rust": "rs"},
 			},
@@ -234,9 +330,9 @@ func TestSaveAndLoadConfig_AllFields(t *testing.T) { //nolint:paralleltest // us
 			cfg: &config.Config{
 				Author:       "user@example.com",
 				OutputDir:    "/path/with spaces/dir",
-				TemplatesDir: "/path/with-underscore",
+				TemplatesDir: "",
 				LogLevel:     "info",
-				Languages:    map[string]string{},
+				Languages:    map[string]string{"c++": "cpp", "c#": "cs"},
 			},
 		},
 	}
@@ -453,7 +549,7 @@ func TestEnsureDefaultConfig(t *testing.T) { //nolint:paralleltest // t.Setenv u
 		t.Fatal("expected non-nil config")
 	}
 
-	configPath := filepath.Join(config.GetDefaultConfigDir(), "scaffy.json")
+	configPath := filepath.Join(config.GetDefaultConfigDir(utils.NewOSInfo()), "scaffy.json")
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		t.Errorf("expected config file at %s", configPath)
 	}
@@ -525,12 +621,12 @@ func TestEnvVariableOverride_OutputDir(t *testing.T) {
 
 	tmpDir := t.TempDir()
 
-	t.Setenv("SCAFFY_OUTPUT_DIR", "/env/output")
-	t.Setenv("SCAFFY_TEMPLATES_DIR", "/env/templates")
+	t.Setenv("SCAFFY_OUTPUT_DIR", tmpDir)
+	t.Setenv("SCAFFY_TEMPLATES_DIR", tmpDir)
 
 	cfg := config.GetDefaultConfig()
 	cfg.OutputDir = "/file/output"
-	cfg.TemplatesDir = "/file/templates"
+	cfg.TemplatesDir = ""
 
 	path := filepath.Join(tmpDir, "config.json")
 	if err := cfg.Save(path, false); err != nil {
@@ -542,12 +638,12 @@ func TestEnvVariableOverride_OutputDir(t *testing.T) {
 		t.Fatalf("failed to load config: %v", err)
 	}
 
-	if loaded.OutputDir != "/env/output" {
-		t.Errorf("expected env override OutputDir '/env/output', got %q", loaded.OutputDir)
+	if loaded.OutputDir != tmpDir {
+		t.Errorf("expected env override OutputDir '%s', got %q", tmpDir, loaded.OutputDir)
 	}
 
-	if loaded.TemplatesDir != "/env/templates" {
-		t.Errorf("expected env override TemplatesDir '/env/templates', got %q", loaded.TemplatesDir)
+	if loaded.TemplatesDir != tmpDir {
+		t.Errorf("expected env override TemplatesDir '%s', got %q", tmpDir, loaded.TemplatesDir)
 	}
 }
 

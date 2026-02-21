@@ -30,10 +30,10 @@ GO_LINT := $(shell command -v golangci-lint 2> /dev/null)
 
 # Linker flags
 PKG := "$(shell $(GO) list -m)/pkg/build_info"
-LDFLAGS := -X $(PKG).AppName=$(BINARY_NAME) \
-	   -X $(PKG).Version=$(VERSION) \
-	   -X $(PKG).GitCommit=$(GIT_COMMIT) \
-	   -X $(PKG).BuildDate=$(BUILD_DATE)
+LDFLAGS := -X $(PKG).APP_NAME=$(BINARY_NAME) \
+	   -X $(PKG).VERSION=$(VERSION) \
+	   -X $(PKG).GIT_COMMIT=$(GIT_COMMIT) \
+	   -X $(PKG).BUILD_DATE=$(BUILD_DATE)
 
 ifeq ($(RELEASE),1)
 	LDFLAGS += -s -w
@@ -81,7 +81,7 @@ test: ## Run tests
 
 .PHONY: test-coverage
 test-coverage: ## Run tests with coverage report
-	$(GO) test -v -race -coverprofile=coverage.out ./...
+	$(GO) test -v -race -covermode=atomic -coverprofile=coverage.out ./...
 	$(GO) tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report: coverage.html"
 

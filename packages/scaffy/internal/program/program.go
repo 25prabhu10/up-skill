@@ -8,6 +8,8 @@ import (
 
 	"github.com/25prabhu10/scaffy/internal/config"
 	"github.com/25prabhu10/scaffy/internal/logger"
+	"github.com/25prabhu10/scaffy/internal/utils"
+	"github.com/spf13/viper"
 )
 
 // contextKey is a private type for context keys to avoid collisions.
@@ -18,10 +20,10 @@ var programKey = contextKey{}
 
 // Program encapsulates the core state and configuration of the application. It holds the loaded configuration and flags for verbose and quiet modes.
 type Program struct {
-	config  *config.Config
-	verbose bool
-	quiet   bool
-	logger  *slog.Logger
+	config *config.Config
+	// verbose bool
+	// quiet   bool
+	logger *slog.Logger
 }
 
 // New creates a new Program instance by loading the configuration from the specified file or default locations. It also sets the verbose and quiet flags based on the provided parameters.
@@ -32,10 +34,10 @@ func New(configFile string, verbose bool, quiet bool) (*Program, error) {
 	}
 
 	return &Program{
-		config:  cfg,
-		verbose: verbose,
-		quiet:   quiet,
-		logger:  logger.New(cfg.LogLevel, verbose, quiet),
+		config: cfg,
+		// verbose: verbose,
+		// quiet:   quiet,
+		logger: logger.New(cfg.LogLevel, verbose, quiet),
 	}, nil
 }
 
@@ -76,7 +78,7 @@ func loadConfiguration(configFile string, verbose bool, quiet bool) (*config.Con
 	cfg, err := loadConfig(configFile)
 	if err != nil {
 		// if config not found, try to create default config
-		if errors.Is(err, config.ErrConfigNotFound) {
+		if errors.As(err, &viper.ConfigFileNotFoundError{}) {
 			var createErr error
 
 			cfg, createErr = config.EnsureDefaultConfig()
@@ -87,7 +89,7 @@ func loadConfiguration(configFile string, verbose bool, quiet bool) (*config.Con
 			// User-facing message about config creation
 			localLogger := logger.New(slog.LevelDebug.String(), verbose, quiet)
 			localLogger.Debug("created default configuration", "path",
-				config.GetDefaultConfigDir()+"/"+config.DEFAULT_CONFIG_FILE_NAME)
+				config.GetDefaultConfigDir(utils.NewOSInfo())+"/"+config.DEFAULT_CONFIG_FILE_NAME)
 		} else {
 			return nil, fmt.Errorf("%w", err)
 		}

@@ -18,7 +18,7 @@ func TestRootCmd_HelpText(t *testing.T) {
 	}
 
 	output := buf.String()
-	if !strings.Contains(output, "This CLI tool helps you scaffold files for different programming languages and frameworks.") {
+	if !strings.Contains(output, "This CLI tool helps you scaffold files for different programming languages and") {
 		t.Errorf("unexpected help output: %s", output)
 	}
 }
@@ -31,15 +31,15 @@ func TestGetRootCmd_BasicConfiguration(t *testing.T) {
 		t.Fatal("expected root command to be initialized, got nil")
 	}
 
-	if cmd.Use != build_info.AppName {
-		t.Errorf("unexpected command use: got %s, want %s", cmd.Use, build_info.AppName)
+	if cmd.Use != build_info.APP_NAME {
+		t.Errorf("unexpected command use: got %s, want %s", cmd.Use, build_info.APP_NAME)
 	}
 
 	if cmd.Short != "A CLI program to scaffold files for different languages." {
 		t.Errorf("unexpected command short description: got %s", cmd.Short)
 	}
 
-	if cmd.Long != "This CLI tool helps you scaffold files for different programming languages and frameworks. It supports multiple languages and provides a simple interface to generate boilerplate code for your projects." {
+	if !strings.Contains(cmd.Long, "This CLI tool helps you scaffold files for different programming languages") {
 		t.Errorf("unexpected command long description: got %s", cmd.Long)
 	}
 }
