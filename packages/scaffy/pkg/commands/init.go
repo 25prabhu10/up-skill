@@ -3,20 +3,16 @@ package commands
 import (
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	"github.com/25prabhu10/scaffy/internal/config"
 	"github.com/25prabhu10/scaffy/internal/program"
 	"github.com/25prabhu10/scaffy/internal/ui"
-	"github.com/25prabhu10/scaffy/internal/utils"
 )
 
 // init command errors.
 var (
-	ErrConfigExists    = errors.New("config file already exists")
 	ErrConfigPathIsDir = errors.New("config file path is a directory")
 )
 
@@ -29,26 +25,12 @@ func NewInitCmd() *cobra.Command {
 	initCmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize a configuration file",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if err := cobra.MaximumNArgs(1)(cmd, args); err != nil {
-				return err
-			}
-
-			// create directory structure
-			if len(args) == 1 {
-				// check if the output path exists and is a directory
-				return utils.CreateDirectoryIfNotExists(args[0])
-			}
-
-			return nil
-		},
+		Args:  cobra.MaximumNArgs(1),
 		Long: fmt.Sprintf(`
 Initialize creates a configuration file for scaffy.
 
-It creates a local config file "%s" in the current directory.`, config.DEFAULT_CONFIG_FILE_NAME),
+It creates a local config file "%s" in the specified directory (default: current directory).`, config.DEFAULT_CONFIG_FILE_NAME),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// cfg, force := buildConfigFromFlags(cmd)
-
 			return runConfigInitializerE(cmd, args, defaultCfg, force)
 		},
 	}
@@ -72,27 +54,22 @@ func runConfigInitializerE(cmd *cobra.Command, args []string, cfg *config.Config
 	userUI := ui.FromContext(ctx)
 	app := program.FromContext(ctx)
 
-	configFilePath := config.DEFAULT_CONFIG_FILE_NAME
-
+	outputDir := ""
 	if len(args) > 0 {
-		configFilePath = filepath.Join(args[0], configFilePath)
+		outputDir = args[0]
 	}
-
-	overwrite := false
 
 	if force {
 		userUI.Warningf("existing config will be overwritten (--force)")
-
-		overwrite = true
-	} else {
-		// check if config file already exists
-		if _, err := os.Stat(configFilePath); err == nil {
-			return fmt.Errorf("%w at %s (use --force to overwrite)", ErrConfigExists, configFilePath)
-		}
 	}
 
-	if err := app.CreateNewConfig(cfg, configFilePath, overwrite); err != nil {
-		return fmt.Errorf("failed to create config: %w", err)
+	configFilePath, err := app.InitializeConfig(cfg, outputDir, force)
+	if err != nil {
+		if errors.Is(err, program.ErrConfigExists) {
+			return fmt.Errorf("%w at %s (use --force to overwrite)", err, configFilePath)
+		}
+
+		return fmt.Errorf("failed to initialize config: %w", err)
 	}
 
 	userUI.Infof("initialized scaffy with default config at %s", configFilePath)

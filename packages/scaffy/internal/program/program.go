@@ -5,10 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/25prabhu10/scaffy/internal/config"
 	"github.com/25prabhu10/scaffy/internal/logger"
 	"github.com/25prabhu10/scaffy/internal/utils"
+	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
 )
 
@@ -18,11 +23,27 @@ type contextKey struct{}
 // programKey is the context key for storing the Program instance.
 var programKey = contextKey{}
 
+// Error definitions for the Program.
+var (
+	ErrConfigExists     = errors.New("config file already exists")
+	ErrInvalidDocFormat = errors.New("invalid documentation format")
+)
+
+// Documentation formats supported by the llm command.
+const (
+	Markdown = "markdown"
+	Man      = "man"
+	Rest     = "rest"
+)
+
+var (
+	AllowedDocFormats    = []string{Markdown, Man, Rest}
+	AllowedDocFormatsStr = strings.Join(AllowedDocFormats, "|")
+)
+
 // Program encapsulates the core state and configuration of the application. It holds the loaded configuration and flags for verbose and quiet modes.
 type Program struct {
 	config *config.Config
-	// verbose bool
-	// quiet   bool
 	logger *slog.Logger
 }
 
@@ -35,20 +56,81 @@ func New(configFile string, verbose bool, quiet bool) (*Program, error) {
 
 	return &Program{
 		config: cfg,
-		// verbose: verbose,
-		// quiet:   quiet,
 		logger: logger.New(cfg.LogLevel, verbose, quiet),
 	}, nil
 }
 
-func (p *Program) CreateNewConfig(cfg *config.Config, configFile string, force bool) error {
-	p.logger.Debug("initializing scaffy config", "path", configFile, "force", force)
+// InitializeConfig handles directory creation, path resolution, and config saving.
+func (p *Program) InitializeConfig(cfg *config.Config, outputDir string, force bool) (string, error) {
+	p.logger.Debug("initializing new config", "force", force)
 
-	if err := cfg.Save(configFile, force); err != nil {
-		return err
+	configFilePath := config.DEFAULT_CONFIG_FILE_NAME
+
+	if outputDir != "" {
+		if err := utils.CreateDirectoryIfNotExists(outputDir); err != nil {
+			return "", fmt.Errorf("failed to create output directory: %w", err)
+		}
+
+		configFilePath = filepath.Join(outputDir, configFilePath)
 	}
 
-	p.logger.Debug("config initialization completed", "path", configFile, "force", force)
+	if !force {
+		if _, err := os.Stat(configFilePath); err == nil {
+			return configFilePath, ErrConfigExists
+		}
+	}
+
+	if err := cfg.Save(configFilePath, force); err != nil {
+		return configFilePath, fmt.Errorf("failed to create config: %w", err)
+	}
+
+	p.logger.Debug("new config initialized successfully", "path", configFilePath)
+
+	return configFilePath, nil
+}
+
+// GenerateLLMDocs handles directory creation and documentation generation for various formats.
+func (p *Program) GenerateLLMDocs(root *cobra.Command, outputDir string, format string, frontMatter bool) error {
+	p.logger.Debug("generating documentation", "path", outputDir, "format", format, "frontMatter", frontMatter)
+
+	if err := utils.CreateDirectoryIfNotExists(outputDir); err != nil {
+		return fmt.Errorf("failed to create output directory: %w", err)
+	}
+
+	root.DisableAutoGenTag = true
+
+	switch format {
+	case Markdown:
+		if frontMatter {
+			prep := func(filename string) string {
+				base := filepath.Base(filename)
+				name := strings.TrimSuffix(base, filepath.Ext(base))
+				title := strings.ReplaceAll(name, "_", " ")
+
+				return fmt.Sprintf("---\ntitle: %q\nslug: %q\ndescription: \"CLI reference for %s\"\n---\n\n", title, name, title)
+			}
+			if err := doc.GenMarkdownTreeCustom(root, outputDir, prep, strings.ToLower); err != nil {
+				return fmt.Errorf("error in generating markdown docs with frontmatter: %w", err)
+			}
+		} else {
+			if err := doc.GenMarkdownTree(root, outputDir); err != nil {
+				return fmt.Errorf("error in generating markdown docs: %w", err)
+			}
+		}
+	case Man:
+		hdr := &doc.GenManHeader{Title: strings.ToUpper(root.Name()), Section: "1"}
+		if err := doc.GenManTree(root, hdr, outputDir); err != nil {
+			return fmt.Errorf("error in generating man pages: %w", err)
+		}
+	case Rest:
+		if err := doc.GenReSTTree(root, outputDir); err != nil {
+			return fmt.Errorf("error in generating reStructuredText docs: %w", err)
+		}
+	default:
+		return fmt.Errorf("%w: %q (valid: %s)", ErrInvalidDocFormat, format, AllowedDocFormatsStr)
+	}
+
+	p.logger.Debug("documentation generated successfully", "path", outputDir, "format", format)
 
 	return nil
 }

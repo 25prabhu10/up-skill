@@ -6,26 +6,17 @@ import (
 	"fmt"
 	"path/filepath"
 	"slices"
-	"strings"
 
+	"github.com/25prabhu10/scaffy/internal/program"
 	"github.com/25prabhu10/scaffy/internal/ui"
 	"github.com/25prabhu10/scaffy/internal/utils"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/cobra/doc"
 )
 
 // llm command errors.
 var (
 	ErrInvalidOutputPath = errors.New("error: invalid output path. Please choose a different output path")
-	ErrInvalidDocFormat  = errors.New("error: invalid documentation format")
-)
-
-// Documentation formats supported by the llm command.
-const (
-	Markdown = "markdown"
-	Man      = "man"
-	Rest     = "rest"
 )
 
 // Flags for the llm command, including output path, format, and front matter option.
@@ -35,15 +26,10 @@ var (
 	flagFrontMatter   bool
 )
 
-// Default output path for generated documentation and allowed formats for validation.
-var (
-	defaultDocOutputPath = filepath.Join(".agents", "skills", "cli", "reference")
-	allowedDocFormats    = []string{Markdown, Man, Rest}
-	allowedDocFormatsStr = strings.Join(allowedDocFormats, "|")
-)
-
 // GetLlmCommand returns a Cobra command that generates documentation for the CLI in a format suitable for language models. It supports multiple output formats and includes validation for the output path and format flags.
 func GetLlmCommand() *cobra.Command {
+	defaultDocOutputPath := filepath.Join(".agents", "skills", "cli", "reference")
+
 	llmCmd := &cobra.Command{
 		Use:   "llm",
 		Short: "Generate llm ready documentation of the CLI",
@@ -53,18 +39,14 @@ func GetLlmCommand() *cobra.Command {
 				return fmt.Errorf("%w: %q", ErrInvalidOutputPath, flagDocOutputPath)
 			}
 
-			if !slices.Contains(allowedDocFormats, flagDocFormat) {
-				return fmt.Errorf("%w. '%s': (%s)", ErrInvalidDocFormat, flagDocFormat, allowedDocFormatsStr)
-			}
-
-			return nil
+			return validateDocFormat()
 		},
 		RunE: runLlmCommandE,
 	}
 
 	// register flags
 	llmCmd.Flags().StringVarP(&flagDocOutputPath, "output", "o", defaultDocOutputPath, "output path for the generated docs")
-	llmCmd.Flags().StringVarP(&flagDocFormat, "format", "f", Markdown, fmt.Sprintf("format to generate docs (%s)", allowedDocFormatsStr))
+	llmCmd.Flags().StringVarP(&flagDocFormat, "format", "f", program.Markdown, fmt.Sprintf("format to generate docs (%s)", program.AllowedDocFormatsStr))
 	llmCmd.Flags().BoolVar(&flagFrontMatter, "front-matter", false, "add frontmatter to markdown files")
 
 	return llmCmd
@@ -72,46 +54,13 @@ func GetLlmCommand() *cobra.Command {
 
 // runLlmCommandE executes the logic for the llm command, generating documentation for the CLI in the specified format and output path.
 func runLlmCommandE(cmd *cobra.Command, args []string) error {
-	if err := utils.CreateDirectoryIfNotExists(flagDocOutputPath); err != nil {
-		return err
-	}
-
 	ctx := cmd.Context()
 
 	userUI := ui.FromContext(ctx)
+	app := program.FromContext(ctx)
 
-	root := cmd.Root()
-	root.DisableAutoGenTag = true
-
-	switch flagDocFormat {
-	case "markdown":
-		if flagFrontMatter {
-			prep := func(filename string) string {
-				base := filepath.Base(filename)
-				name := strings.TrimSuffix(base, filepath.Ext(base))
-				title := strings.ReplaceAll(name, "_", " ")
-
-				return fmt.Sprintf("---\ntitle: %q\nslug: %q\ndescription: \"CLI reference for %s\"\n---\n\n", title, name, title)
-			}
-			if err := doc.GenMarkdownTreeCustom(root, flagDocOutputPath, prep, strings.ToLower); err != nil {
-				return fmt.Errorf("error in generating markdown docs with frontmatter: %w", err)
-			}
-		} else {
-			if err := doc.GenMarkdownTree(root, flagDocOutputPath); err != nil {
-				return fmt.Errorf("error in generating markdown docs: %w", err)
-			}
-		}
-	case "man":
-		hdr := &doc.GenManHeader{Title: strings.ToUpper(root.Name()), Section: "1"}
-		if err := doc.GenManTree(root, hdr, flagDocOutputPath); err != nil {
-			return fmt.Errorf("error in generating man pages: %w", err)
-		}
-	case "rest":
-		if err := doc.GenReSTTree(root, flagDocOutputPath); err != nil {
-			return fmt.Errorf("error in generating reStructuredText docs: %w", err)
-		}
-	default:
-		return fmt.Errorf("%w: %s", ErrInvalidDocFormat, flagDocFormat)
+	if err := app.GenerateLLMDocs(cmd.Root(), flagDocOutputPath, flagDocFormat, flagFrontMatter); err != nil {
+		return err
 	}
 
 	userUI.Infof("generated documentation for CLI at %s in %s format", flagDocOutputPath, flagDocFormat)
@@ -119,6 +68,10 @@ func runLlmCommandE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// func generateSKILLSReferenceDoc(cmd *cobra.Command) string {
-// 	return ""
-// }
+func validateDocFormat() error {
+	if !slices.Contains(program.AllowedDocFormats, flagDocFormat) {
+		return fmt.Errorf("%w: %q (valid: %s)", program.ErrInvalidDocFormat, flagDocFormat, program.AllowedDocFormatsStr)
+	}
+
+	return nil
+}
