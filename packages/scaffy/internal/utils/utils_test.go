@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/25prabhu10/scaffy/internal/utils"
+	"github.com/25prabhu10/scaffy/internal/utils/test_utils"
 )
 
 func TestIsStringEmpty(t *testing.T) {
@@ -56,12 +57,12 @@ func TestIsStringOverMaxLength(t *testing.T) {
 		},
 		{
 			name:     "string is exactly max length",
-			inputStr: utils.GetLongStringChars(),
+			inputStr: test_utils.GetLongStringChars(),
 			expected: false,
 		},
 		{
 			name:     "string is over max length",
-			inputStr: utils.GetLongString256Chars(),
+			inputStr: test_utils.GetLongString256Chars(),
 			expected: true,
 		},
 	}
@@ -182,4 +183,34 @@ func TestCreateDirectoryIfNotExists(t *testing.T) { //nolint:tparallel,parallelt
 			}
 		})
 	}
+}
+
+func TestGetUserConfigDir(t *testing.T) {
+	t.Parallel()
+
+	osInfo := utils.NewOSInfo()
+
+	configDir, err := osInfo.GetUserConfigDir()
+	if err != nil {
+		t.Fatalf("GetUserConfigDir returned an error: %v", err)
+	}
+
+	if configDir == "" {
+		t.Fatal("GetUserConfigDir returned an empty string")
+	}
+
+	t.Logf("User config directory: %s", configDir)
+}
+
+func TestGetOS(t *testing.T) {
+	t.Parallel()
+
+	osInfo := utils.NewOSInfo()
+
+	osName := osInfo.GetOS()
+	if osName == "" {
+		t.Fatal("GetOS returned an empty string")
+	}
+
+	t.Logf("Operating system: %s", osName)
 }

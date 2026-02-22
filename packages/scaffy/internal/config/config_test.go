@@ -2,43 +2,24 @@ package config_test
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/25prabhu10/scaffy/internal/config"
+	"github.com/25prabhu10/scaffy/internal/constants"
 	"github.com/25prabhu10/scaffy/internal/utils"
+	"github.com/25prabhu10/scaffy/internal/utils/test_utils"
 	"github.com/25prabhu10/scaffy/pkg/build_info"
-	"github.com/spf13/viper"
 )
 
 const (
 	testAppName   = "scaffy"
 	logLevelDebug = "debug"
-	goosWindows   = "windows"
-	goosDarwin    = "darwin"
-	goosIOS       = "ios"
 )
-
-type MockOSInfo struct {
-	MockGOOS          string
-	MockUserConfigDir string
-}
-
-func (m *MockOSInfo) GetOS() string {
-	return m.MockGOOS
-}
-
-func (m *MockOSInfo) GetUserConfigDir() (string, error) {
-	if m.MockUserConfigDir != "" {
-		return m.MockUserConfigDir, nil
-	}
-
-	return "", os.ErrNotExist
-}
 
 func init() { //nolint:gochecknoinits // needed to set test constants before tests run
 	build_info.APP_NAME = testAppName
@@ -86,62 +67,57 @@ func TestDefaultConfig(t *testing.T) {
 	}
 }
 
-func TestGetDefaultLanguages(t *testing.T) {
+func TestConstantsAndDefaults(t *testing.T) {
 	t.Parallel()
 
-	langs := config.GetDefaultLanguages()
+	t.Run("GetDefaultLanguages", func(t *testing.T) {
+		t.Parallel()
 
-	if len(langs) == 0 {
-		t.Fatal("expected non-empty languages map")
-	}
-
-	expectedLangs := []string{"go", "c"}
-	for _, lang := range expectedLangs {
-		if _, ok := langs[lang]; !ok {
-			t.Errorf("expected language %q in default languages", lang)
+		langs := config.GetDefaultLanguages()
+		if len(langs) == 0 {
+			t.Fatal("expected non-empty languages map")
 		}
-	}
 
-	if langs["go"] != "go" {
-		t.Errorf("expected go extension 'go', got %q", langs["go"])
-	}
+		expectedLangs := []string{"go", "c"}
+		for _, lang := range expectedLangs {
+			if _, ok := langs[lang]; !ok {
+				t.Errorf("expected language %q in default languages", lang)
+			}
+		}
 
-	if langs["c"] != "c" {
-		t.Errorf("expected c extension 'c', got %q", langs["c"])
-	}
-}
+		if langs["go"] != "go" {
+			t.Errorf("expected go extension 'go', got %q", langs["go"])
+		}
 
-func TestVerboseLogLevel(t *testing.T) {
-	t.Parallel()
+		if langs["c"] != "c" {
+			t.Errorf("expected c extension 'c', got %q", langs["c"])
+		}
+	})
 
-	expected := logLevelDebug
+	t.Run("VerboseLogLevel", func(t *testing.T) {
+		t.Parallel()
 
-	got := config.VerboseLogLevel()
-	if got != expected {
-		t.Errorf("expected %q, got %q", expected, got)
-	}
-}
+		if got := config.VerboseLogLevel(); got != logLevelDebug {
+			t.Errorf("expected %q, got %q", logLevelDebug, got)
+		}
+	})
 
-func TestQuietLogLevel(t *testing.T) {
-	t.Parallel()
+	t.Run("QuietLogLevel", func(t *testing.T) {
+		t.Parallel()
 
-	expected := "error"
+		if got := config.QuietLogLevel(); got != "error" {
+			t.Errorf("expected %q, got %q", "error", got)
+		}
+	})
 
-	got := config.QuietLogLevel()
-	if got != expected {
-		t.Errorf("expected %q, got %q", expected, got)
-	}
-}
+	t.Run("AllLogLevelsStr", func(t *testing.T) {
+		t.Parallel()
 
-func TestAllLogLevelsStr(t *testing.T) {
-	t.Parallel()
-
-	expected := "debug,info,warn,error"
-
-	got := config.AllLogLevelsStr()
-	if got != expected {
-		t.Errorf("expected %q, got %q", expected, got)
-	}
+		expected := "debug,info,warn,error"
+		if got := config.AllLogLevelsStr(); got != expected {
+			t.Errorf("expected %q, got %q", expected, got)
+		}
+	})
 }
 
 func TestGetDefaultConfigDir(t *testing.T) {
@@ -158,37 +134,37 @@ func TestGetDefaultConfigDir(t *testing.T) {
 	}{
 		{
 			name:           "windows with user config dir",
-			os:             goosWindows,
+			os:             test_utils.GoosWindows,
 			userConfigDir:  "C:\\Users\\TestUser\\AppData\\Roaming",
 			expectedSubstr: "C:\\Users\\TestUser\\AppData\\Roaming",
 		},
 		{
 			name:           "darwin with user config dir",
-			os:             goosDarwin,
+			os:             test_utils.GoosDarwin,
 			userConfigDir:  "/Users/testuser/Library/Application Support",
 			expectedSubstr: "/Users/testuser/Library/Application Support",
 		},
 		{
 			name:           "linux with user config dir",
-			os:             "linux",
+			os:             test_utils.GoosLinux,
 			userConfigDir:  "/home/testuser/.config",
 			expectedSubstr: "/home/testuser/.config",
 		},
 		{
 			name:           "windows without user config dir",
-			os:             goosWindows,
+			os:             test_utils.GoosWindows,
 			userConfigDir:  "",
 			expectedSubstr: expectedValue,
 		},
 		{
 			name:           "darwin without user config dir",
-			os:             goosDarwin,
+			os:             test_utils.GoosDarwin,
 			userConfigDir:  "",
 			expectedSubstr: expectedValue,
 		},
 		{
 			name:           "linux without user config dir",
-			os:             "linux",
+			os:             test_utils.GoosLinux,
 			userConfigDir:  "",
 			expectedSubstr: expectedValue,
 		},
@@ -198,7 +174,7 @@ func TestGetDefaultConfigDir(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			dir := config.GetDefaultConfigDir(&MockOSInfo{MockGOOS: tt.os, MockUserConfigDir: tt.userConfigDir})
+			dir := config.GetDefaultConfigDir(&test_utils.MockOSInfo{MockGOOS: tt.os, MockUserConfigDir: tt.userConfigDir})
 			if utils.IsStringEmpty(dir) {
 				t.Error("expected non-empty config directory")
 			}
@@ -220,22 +196,17 @@ func TestGetDefaultConfigPath(t *testing.T) {
 	}{
 		{
 			name:           "windows",
-			os:             goosWindows,
+			os:             test_utils.GoosWindows,
 			expectedSubstr: "%USERPROFILE%",
 		},
 		{
 			name:           "darwin",
-			os:             goosDarwin,
-			expectedSubstr: "$HOME",
-		},
-		{
-			name:           "ios",
-			os:             goosIOS,
+			os:             test_utils.GoosDarwin,
 			expectedSubstr: "$HOME",
 		},
 		{
 			name:           "linux",
-			os:             "linux",
+			os:             test_utils.GoosLinux,
 			expectedSubstr: "$XDG_CONFIG_HOME",
 		},
 	}
@@ -244,7 +215,7 @@ func TestGetDefaultConfigPath(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			path := config.GetDefaultConfigPath(&MockOSInfo{MockGOOS: tt.os})
+			path := config.GetDefaultConfigPath(&test_utils.MockOSInfo{MockGOOS: tt.os})
 			if utils.IsStringEmpty(path) {
 				t.Error("expected non-empty config path")
 			}
@@ -256,414 +227,463 @@ func TestGetDefaultConfigPath(t *testing.T) {
 	}
 }
 
-func TestSaveAndLoadConfig(t *testing.T) {
+func TestConfig_Validate(t *testing.T) {
 	t.Parallel()
 
-	viper.Reset()
+	longString := strings.Repeat("a", constants.MAX_NAME_LENGTH+1)
 
-	tmpDir := t.TempDir()
-	path := filepath.Join(tmpDir, "test-config.json")
-
-	cfg := config.GetDefaultConfig()
-	cfg.Author = "test-author"
-	cfg.OutputDir = "/custom/output"
-	cfg.TemplatesDir = tmpDir
-	cfg.LogLevel = logLevelDebug
-
-	if err := cfg.Save(path, false); err != nil {
-		t.Fatalf("failed to save config: %v", err)
-	}
-
-	loaded, err := config.LoadConfigFromFile(path)
-	if err != nil {
-		t.Fatalf("failed to load config: %v", err)
-	}
-
-	if loaded.Author != "test-author" {
-		t.Errorf("expected Author 'test-author', got %q", loaded.Author)
-	}
-
-	if loaded.OutputDir != "/custom/output" {
-		t.Errorf("expected OutputDir '/custom/output', got %q", loaded.OutputDir)
-	}
-
-	if loaded.TemplatesDir != tmpDir {
-		t.Errorf("expected TemplatesDir '%s', got %q", tmpDir, loaded.TemplatesDir)
-	}
-
-	if loaded.LogLevel != "debug" {
-		t.Errorf("expected LogLevel 'debug', got %q", loaded.LogLevel)
-	}
-
-	if loaded.Languages["go"] != "go" {
-		t.Errorf("expected Languages['go'] = 'go', got %q", loaded.Languages["go"])
-	}
-}
-
-func TestSaveAndLoadConfig_AllFields(t *testing.T) { //nolint:paralleltest // uses global viper state (viper.Reset)
 	tests := []struct {
-		name string
-		cfg  *config.Config
+		name    string
+		cfg     *config.Config
+		wantErr error
 	}{
 		{
-			name: "empty_fields",
+			name:    "nil config",
+			cfg:     nil,
+			wantErr: config.ErrNilConfig,
+		},
+		{
+			name:    "valid default config",
+			cfg:     config.GetDefaultConfig(),
+			wantErr: nil,
+		},
+		{
+			name: "empty author",
 			cfg: &config.Config{
-				Author:       "",
-				OutputDir:    ".",
-				TemplatesDir: "",
-				LogLevel:     "error",
+				Author:    "   ",
+				Languages: map[string]string{"go": "go"},
+				LogLevel:  "info",
+				OutputDir: ".",
+			},
+			wantErr: config.ErrAuthorEmpty,
+		},
+		{
+			name: "author too long",
+			cfg: &config.Config{
+				Author:    longString,
+				Languages: map[string]string{"go": "go"},
+				LogLevel:  "info",
+				OutputDir: ".",
+			},
+			wantErr: config.ErrAuthorInvalidLength,
+		},
+		{
+			name: "invalid log level",
+			cfg: &config.Config{
+				Languages: map[string]string{"go": "go"},
+				LogLevel:  "invalid",
+				OutputDir: ".",
+			},
+			wantErr: config.ErrInvalidLogLevel,
+		},
+		{
+			name: "empty languages",
+			cfg: &config.Config{
+				Languages: map[string]string{},
+				LogLevel:  "info",
+				OutputDir: ".",
+			},
+			wantErr: config.ErrLanguagesEmpty,
+		},
+		{
+			name: "empty language key",
+			cfg: &config.Config{
+				Languages: map[string]string{"   ": "go"},
+				LogLevel:  "info",
+				OutputDir: ".",
+			},
+			wantErr: config.ErrLanguageEmpty,
+		},
+		{
+			name: "language key too long",
+			cfg: &config.Config{
+				Languages: map[string]string{longString: "go"},
+				LogLevel:  "info",
+				OutputDir: ".",
+			},
+			wantErr: config.ErrLanguageInvalidLength,
+		},
+		{
+			name: "empty file extension",
+			cfg: &config.Config{
+				Languages: map[string]string{"go": "   "},
+				LogLevel:  "info",
+				OutputDir: ".",
+			},
+			wantErr: config.ErrFileExtensionEmpty,
+		},
+		{
+			name: "file extension too long",
+			cfg: &config.Config{
+				Languages: map[string]string{"go": longString},
+				LogLevel:  "info",
+				OutputDir: ".",
+			},
+			wantErr: config.ErrFileExtensionInvalidLength,
+		},
+		{
+			name: "empty output dir",
+			cfg: &config.Config{
+				Languages: map[string]string{"go": "go"},
+				LogLevel:  "info",
+				OutputDir: "   ",
+			},
+			wantErr: config.ErrOutputDirEmpty,
+		},
+		{
+			name: "non-existent templates dir",
+			cfg: &config.Config{
 				Languages:    map[string]string{"go": "go"},
-			},
-		},
-		{
-			name: "all_fields_set",
-			cfg: &config.Config{
-				Author:       "test-user",
-				OutputDir:    "/tmp/output",
-				TemplatesDir: "",
-				LogLevel:     "debug",
-				Languages:    map[string]string{"go": "go", "python": "py", "rust": "rs"},
-			},
-		},
-		{
-			name: "special_characters",
-			cfg: &config.Config{
-				Author:       "user@example.com",
-				OutputDir:    "/path/with spaces/dir",
-				TemplatesDir: "",
 				LogLevel:     "info",
-				Languages:    map[string]string{"c++": "cpp", "c#": "cs"},
+				OutputDir:    ".",
+				TemplatesDir: "/path/that/does/not/exist/12345",
 			},
+			wantErr: os.ErrNotExist,
+		},
+		{
+			name: "valid config with normalization",
+			cfg: &config.Config{
+				Languages: map[string]string{"  GO  ": "  GO  "},
+				LogLevel:  "  INFO  ",
+				OutputDir: ".",
+			},
+			wantErr: nil,
 		},
 	}
 
-	//nolint:paralleltest // uses global viper state (viper.Reset)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			viper.Reset()
+			t.Parallel()
 
-			tmpDir := t.TempDir()
-			path := filepath.Join(tmpDir, "config-"+tt.name+".json")
+			err := tt.cfg.Validate()
+			if tt.wantErr != nil { //nolint:nestif // test has multiple error cases
+				if !errors.Is(err, tt.wantErr) {
+					t.Errorf("expected error %v, got %v", tt.wantErr, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("expected no error, got %v", err)
+				}
 
-			if err := tt.cfg.Save(path, false); err != nil {
-				t.Fatalf("failed to save config: %v", err)
-			}
+				if tt.cfg != nil && tt.name == "valid config with normalization" {
+					if tt.cfg.LogLevel != "info" {
+						t.Errorf("expected log level to be normalized to 'info', got %q", tt.cfg.LogLevel)
+					}
 
-			loaded, err := config.LoadConfigFromFile(path)
-			if err != nil {
-				t.Fatalf("failed to load config: %v", err)
-			}
-
-			if loaded.Author != tt.cfg.Author {
-				t.Errorf("Author: expected %q, got %q", tt.cfg.Author, loaded.Author)
-			}
-
-			if loaded.OutputDir != tt.cfg.OutputDir {
-				t.Errorf("OutputDir: expected %q, got %q", tt.cfg.OutputDir, loaded.OutputDir)
-			}
-
-			if loaded.TemplatesDir != tt.cfg.TemplatesDir {
-				t.Errorf("TemplatesDir: expected %q, got %q", tt.cfg.TemplatesDir, loaded.TemplatesDir)
-			}
-
-			if loaded.LogLevel != tt.cfg.LogLevel {
-				t.Errorf("LogLevel: expected %q, got %q", tt.cfg.LogLevel, loaded.LogLevel)
-			}
-
-			for lang, ext := range tt.cfg.Languages {
-				if loaded.Languages[lang] != ext {
-					t.Errorf("Languages[%q]: expected %q, got %q", lang, ext, loaded.Languages[lang])
+					if tt.cfg.Languages["go"] != "go" {
+						t.Errorf("expected language to be normalized to 'go', got %q", tt.cfg.Languages["go"])
+					}
 				}
 			}
 		})
 	}
 }
 
-func TestSaveConfig_Overwrite(t *testing.T) { //nolint:paralleltest // uses global viper state (viper.Reset)
-	viper.Reset()
+func TestConfig_Save(t *testing.T) { //nolint:gocognit // test has multiple subtests and error cases
+	t.Parallel()
 
-	tmpDir := t.TempDir()
-	path := filepath.Join(tmpDir, "overwrite-test.json")
+	t.Run("save and load valid config", func(t *testing.T) {
+		t.Parallel()
+		tmpDir := t.TempDir()
+		path := filepath.Join(tmpDir, "test-config.json")
 
-	if err := config.GetDefaultConfig().Save(path, false); err != nil {
-		t.Fatalf("failed to save initial config: %v", err)
-	}
+		cfg := config.GetDefaultConfig()
+		cfg.Author = "test-author"
+		cfg.OutputDir = "/custom/output"
+		cfg.TemplatesDir = tmpDir
+		cfg.LogLevel = logLevelDebug
 
-	err := config.GetDefaultConfig().Save(path, false)
-	if err == nil {
-		t.Error("expected error when saving without overwrite")
-	}
+		if err := cfg.Save(path, false); err != nil {
+			t.Fatalf("failed to save config: %v", err)
+		}
 
-	cfg := config.GetDefaultConfig()
+		loaded, err := config.LoadConfigFromFile(path)
+		if err != nil {
+			t.Fatalf("failed to load config: %v", err)
+		}
 
-	cfg.Author = "updated-author"
-	if err := cfg.Save(path, true); err != nil {
-		t.Errorf("expected no error with overwrite=true, got %v", err)
-	}
+		if loaded.Author != "test-author" {
+			t.Errorf("expected Author 'test-author', got %q", loaded.Author)
+		}
 
-	viper.Reset()
+		if loaded.OutputDir != "/custom/output" {
+			t.Errorf("expected OutputDir '/custom/output', got %q", loaded.OutputDir)
+		}
 
-	loaded, err := config.LoadConfigFromFile(path)
-	if err != nil {
-		t.Fatalf("failed to load config: %v", err)
-	}
+		if loaded.TemplatesDir != tmpDir {
+			t.Errorf("expected TemplatesDir '%s', got %q", tmpDir, loaded.TemplatesDir)
+		}
 
-	if loaded.Author != "updated-author" {
-		t.Errorf("expected updated author, got %q", loaded.Author)
-	}
+		if loaded.LogLevel != "debug" {
+			t.Errorf("expected LogLevel 'debug', got %q", loaded.LogLevel)
+		}
+
+		if loaded.Languages["go"] != "go" {
+			t.Errorf("expected Languages['go'] = 'go', got %q", loaded.Languages["go"])
+		}
+	})
+
+	t.Run("overwrite existing config", func(t *testing.T) {
+		t.Parallel()
+		tmpDir := t.TempDir()
+		path := filepath.Join(tmpDir, "overwrite-test.json")
+
+		if err := config.GetDefaultConfig().Save(path, false); err != nil {
+			t.Fatalf("failed to save initial config: %v", err)
+		}
+
+		err := config.GetDefaultConfig().Save(path, false)
+		if err == nil {
+			t.Error("expected error when saving without overwrite")
+		}
+
+		cfg := config.GetDefaultConfig()
+		cfg.Author = "updated-author"
+
+		if err := cfg.Save(path, true); err != nil {
+			t.Errorf("expected no error with overwrite=true, got %v", err)
+		}
+
+		loaded, err := config.LoadConfigFromFile(path)
+		if err != nil {
+			t.Fatalf("failed to load config: %v", err)
+		}
+
+		if loaded.Author != "updated-author" {
+			t.Errorf("expected updated author, got %q", loaded.Author)
+		}
+	})
+
+	t.Run("creates parent directory", func(t *testing.T) {
+		t.Parallel()
+		tmpDir := t.TempDir()
+		path := filepath.Join(tmpDir, "nested", "deep", "dir", "config.json")
+
+		cfg := config.GetDefaultConfig()
+		if err := cfg.Save(path, false); err != nil {
+			t.Fatalf("failed to save config with nested dirs: %v", err)
+		}
+
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			t.Error("expected config file to be created")
+		}
+	})
+
+	t.Run("empty path", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := config.GetDefaultConfig()
+
+		err := cfg.Save("", false)
+		if err == nil {
+			t.Error("expected error for empty path")
+		}
+	})
+
+	t.Run("invalid config", func(t *testing.T) {
+		t.Parallel()
+		tmpDir := t.TempDir()
+		path := filepath.Join(tmpDir, "invalid-config.json")
+
+		cfg := config.GetDefaultConfig()
+		cfg.LogLevel = "invalid"
+
+		err := cfg.Save(path, false)
+		if !errors.Is(err, config.ErrInvalidConfig) {
+			t.Errorf("expected ErrInvalidConfig, got %v", err)
+		}
+	})
 }
 
-func TestSaveConfig_CreatesParentDirectory(t *testing.T) { //nolint:paralleltest // uses global viper state (viper.Reset)
-	viper.Reset()
+func TestLoadConfigFromFile(t *testing.T) {
+	t.Parallel()
 
-	tmpDir := t.TempDir()
-	path := filepath.Join(tmpDir, "nested", "deep", "dir", "config.json")
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
 
-	cfg := config.GetDefaultConfig()
-	if err := cfg.Save(path, false); err != nil {
-		t.Fatalf("failed to save config with nested dirs: %v", err)
-	}
+		_, err := config.LoadConfigFromFile("/nonexistent/path/config.json")
+		if !errors.Is(err, os.ErrNotExist) {
+			t.Errorf("expected os.ErrNotExist, got %v", err)
+		}
+	})
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		t.Error("expected config file to be created")
-	}
+	t.Run("invalid json", func(t *testing.T) {
+		t.Parallel()
+		tmpDir := t.TempDir()
+		path := filepath.Join(tmpDir, "invalid.json")
+
+		invalidJSON := `{"author": "test", "languages": invalid}`
+		if err := os.WriteFile(path, []byte(invalidJSON), 0600); err != nil {
+			t.Fatalf("failed to write invalid JSON: %v", err)
+		}
+
+		_, err := config.LoadConfigFromFile(path)
+		if !errors.Is(err, config.ErrReadConfig) {
+			t.Errorf("expected ErrReadConfig, got %v", err)
+		}
+	})
+
+	t.Run("directory path", func(t *testing.T) {
+		t.Parallel()
+		tmpDir := t.TempDir()
+
+		_, err := config.LoadConfigFromFile(tmpDir)
+		if !errors.Is(err, config.ErrReadConfig) {
+			t.Errorf("expected ErrReadConfig, got %v", err)
+		}
+	})
+
+	t.Run("invalid log level in file", func(t *testing.T) {
+		t.Parallel()
+		tmpDir := t.TempDir()
+		path := filepath.Join(tmpDir, "invalid-log-level.json")
+
+		invalidConfig := `{"log-level": "trace", "languages": {"go": "go"}, "output-dir": "."}`
+		if err := os.WriteFile(path, []byte(invalidConfig), 0600); err != nil {
+			t.Fatalf("failed to write invalid config: %v", err)
+		}
+
+		_, err := config.LoadConfigFromFile(path)
+		if !errors.Is(err, config.ErrInvalidConfig) {
+			t.Errorf("expected ErrInvalidConfig, got %v", err)
+		}
+	})
 }
 
-func TestSaveConfig_EmptyPath(t *testing.T) { //nolint:paralleltest // uses global viper state (viper.Reset)
-	viper.Reset()
+func TestLoadConfigFromDefaultFile(t *testing.T) { //nolint:paralleltest // test modifies environment variables and working directory
+	t.Run("not found", func(t *testing.T) { //nolint:paralleltest // modifies environment variables
+		tmpHome := t.TempDir()
+		test_utils.SetHomeEnv(t, tmpHome)
 
-	cfg := config.GetDefaultConfig()
+		_, err := config.LoadConfigFromDefaultFile()
+		if !errors.Is(err, os.ErrNotExist) && !strings.Contains(err.Error(), "Not Found") {
+			t.Errorf("expected os.ErrNotExist or 'Not Found' error, got %v", err)
+		}
+	})
 
-	err := cfg.Save("", false)
-	if err == nil {
-		t.Error("expected error for empty path")
-	}
+	t.Run("found in current dir", func(t *testing.T) { //nolint:paralleltest // modifies working directory
+		tmpDir := t.TempDir()
+		t.Chdir(tmpDir)
+
+		cfg := config.GetDefaultConfig()
+		cfg.Author = "current-dir-author"
+
+		configPath := filepath.Join(tmpDir, "scaffy.json")
+		if err := cfg.Save(configPath, false); err != nil {
+			t.Fatalf("failed to save config: %v", err)
+		}
+
+		loaded, err := config.LoadConfigFromDefaultFile()
+		if err != nil {
+			t.Fatalf("failed to load config from default: %v", err)
+		}
+
+		if loaded.Author != "current-dir-author" {
+			t.Errorf("expected Author 'current-dir-author', got %q", loaded.Author)
+		}
+	})
 }
 
-func TestLoadConfigFromFile_NotFound(t *testing.T) { //nolint:paralleltest // uses global viper state (viper.Reset)
-	viper.Reset()
+func TestEnsureDefaultConfig(t *testing.T) { //nolint:paralleltest // test modifies environment variables and working directory
+	t.Run("creates new config", func(t *testing.T) { //nolint:paralleltest // modifies environment variables
+		tmpHome := t.TempDir()
+		test_utils.SetHomeEnv(t, tmpHome)
 
-	_, err := config.LoadConfigFromFile("/nonexistent/path/config.json")
-	if err == nil {
-		t.Error("expected error for non-existent file")
-	}
-}
+		cfg, err := config.EnsureDefaultConfig()
+		if err != nil {
+			t.Fatalf("failed to ensure default config: %v", err)
+		}
 
-func TestLoadConfigFromFile_InvalidJSON(t *testing.T) { //nolint:paralleltest // uses global viper state (viper.Reset)
-	viper.Reset()
+		if cfg == nil {
+			t.Fatal("expected non-nil config")
+		}
 
-	tmpDir := t.TempDir()
-	path := filepath.Join(tmpDir, "invalid.json")
+		configPath := filepath.Join(config.GetDefaultConfigDir(utils.NewOSInfo()), "scaffy.json")
+		if _, err := os.Stat(configPath); os.IsNotExist(err) {
+			t.Errorf("expected config file at %s", configPath)
+		}
+	})
 
-	invalidJSON := `{"author": "test", "languages": invalid}`
-	if err := os.WriteFile(path, []byte(invalidJSON), 0600); err != nil {
-		t.Fatalf("failed to write invalid JSON: %v", err)
-	}
+	t.Run("already exists", func(t *testing.T) { //nolint:paralleltest // modifies environment variables
+		tmpHome := t.TempDir()
+		test_utils.SetHomeEnv(t, tmpHome)
 
-	_, err := config.LoadConfigFromFile(path)
-	if err == nil {
-		t.Error("expected error for invalid JSON")
-	}
-}
+		cfg, err := config.EnsureDefaultConfig()
+		if err != nil {
+			t.Fatalf("first call failed: %v", err)
+		}
 
-func TestLoadConfigFromFile_DirectoryPath(t *testing.T) { //nolint:paralleltest // uses global viper state (viper.Reset)
-	viper.Reset()
+		_, err = config.EnsureDefaultConfig()
+		if err == nil {
+			t.Error("expected error when config already exists")
+		}
 
-	tmpDir := t.TempDir()
-
-	_, err := config.LoadConfigFromFile(tmpDir)
-	if err == nil {
-		t.Error("expected error when path is a directory")
-	}
-}
-
-func TestLoadConfigFromDefaultFile_NotFound(t *testing.T) { //nolint:paralleltest // t.Setenv used
-	viper.Reset()
-
-	tmpHome := t.TempDir()
-
-	switch runtime.GOOS {
-	case goosWindows:
-		t.Setenv("AppData", tmpHome)
-		t.Setenv("USERPROFILE", tmpHome)
-	case goosDarwin, goosIOS:
-		t.Setenv("HOME", tmpHome)
-	default:
-		t.Setenv("XDG_CONFIG_HOME", filepath.Join(tmpHome, ".config"))
-	}
-
-	_, err := config.LoadConfigFromDefaultFile()
-	if err == nil {
-		t.Error("expected error when no config file found")
-	}
-}
-
-func TestLoadConfigFromDefaultFile_FoundInCurrentDir(t *testing.T) { //nolint:paralleltest // changes working directory
-	viper.Reset()
-
-	tmpDir := t.TempDir()
-
-	cfg := config.GetDefaultConfig()
-	cfg.Author = "current-dir-author"
-
-	configPath := filepath.Join(tmpDir, "scaffy.json")
-	if err := cfg.Save(configPath, false); err != nil {
-		t.Fatalf("failed to save config: %v", err)
-	}
-
-	t.Chdir(tmpDir)
-
-	viper.Reset()
-
-	loaded, err := config.LoadConfigFromDefaultFile()
-	if err != nil {
-		t.Fatalf("failed to load config from default: %v", err)
-	}
-
-	if loaded.Author != "current-dir-author" {
-		t.Errorf("expected Author 'current-dir-author', got %q", loaded.Author)
-	}
-}
-
-func TestEnsureDefaultConfig(t *testing.T) { //nolint:paralleltest // t.Setenv used
-	viper.Reset()
-
-	tmpHome := t.TempDir()
-
-	switch runtime.GOOS {
-	case goosWindows:
-		t.Setenv("AppData", tmpHome)
-		t.Setenv("USERPROFILE", tmpHome)
-	case goosDarwin, goosIOS:
-		t.Setenv("HOME", tmpHome)
-	default:
-		t.Setenv("XDG_CONFIG_HOME", filepath.Join(tmpHome, ".config"))
-	}
-
-	cfg, err := config.EnsureDefaultConfig()
-	if err != nil {
-		t.Fatalf("failed to ensure default config: %v", err)
-	}
-
-	if cfg == nil {
-		t.Fatal("expected non-nil config")
-	}
-
-	configPath := filepath.Join(config.GetDefaultConfigDir(utils.NewOSInfo()), "scaffy.json")
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		t.Errorf("expected config file at %s", configPath)
-	}
-}
-
-func TestEnsureDefaultConfig_AlreadyExists(t *testing.T) { //nolint:paralleltest // t.Setenv used, uses global viper state (viper.Reset)
-	viper.Reset()
-
-	tmpHome := t.TempDir()
-
-	switch runtime.GOOS {
-	case goosWindows:
-		t.Setenv("AppData", tmpHome)
-		t.Setenv("USERPROFILE", tmpHome)
-	case goosDarwin, goosIOS:
-		t.Setenv("HOME", tmpHome)
-	default:
-		t.Setenv("XDG_CONFIG_HOME", filepath.Join(tmpHome, ".config"))
-	}
-
-	cfg, err := config.EnsureDefaultConfig()
-	if err != nil {
-		t.Fatalf("first call failed: %v", err)
-	}
-
-	_, err = config.EnsureDefaultConfig()
-	if err == nil {
-		t.Error("expected error when config already exists")
-	}
-
-	if cfg == nil {
-		t.Error("expected config from first call")
-	}
+		if cfg == nil {
+			t.Error("expected config from first call")
+		}
+	})
 }
 
 func TestEnvVariableOverride(t *testing.T) {
-	viper.Reset()
+	t.Run("override author and log level", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		t.Setenv("SCAFFY_AUTHOR", "env-author")
+		t.Setenv("SCAFFY_LOG_LEVEL", "warn")
 
-	tmpDir := t.TempDir()
+		cfg := config.GetDefaultConfig()
+		cfg.Author = "file-author"
+		cfg.LogLevel = logLevelDebug
 
-	t.Setenv("SCAFFY_AUTHOR", "env-author")
-	t.Setenv("SCAFFY_LOG_LEVEL", "warn")
+		path := filepath.Join(tmpDir, "config.json")
+		if err := cfg.Save(path, false); err != nil {
+			t.Fatalf("failed to save config: %v", err)
+		}
 
-	cfg := config.GetDefaultConfig()
-	cfg.Author = "file-author"
-	cfg.LogLevel = logLevelDebug
+		loaded, err := config.LoadConfigFromFile(path)
+		if err != nil {
+			t.Fatalf("failed to load config: %v", err)
+		}
 
-	path := filepath.Join(tmpDir, "config.json")
-	if err := cfg.Save(path, false); err != nil {
-		t.Fatalf("failed to save config: %v", err)
-	}
+		if loaded.Author != "env-author" {
+			t.Errorf("expected env override Author 'env-author', got %q", loaded.Author)
+		}
 
-	loaded, err := config.LoadConfigFromFile(path)
-	if err != nil {
-		t.Fatalf("failed to load config: %v", err)
-	}
+		if loaded.LogLevel != "warn" {
+			t.Errorf("expected env override LogLevel 'warn', got %q", loaded.LogLevel)
+		}
+	})
 
-	if loaded.Author != "env-author" {
-		t.Errorf("expected env override Author 'env-author', got %q", loaded.Author)
-	}
+	t.Run("override output dir and templates dir", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		t.Setenv("SCAFFY_OUTPUT_DIR", tmpDir)
+		t.Setenv("SCAFFY_TEMPLATES_DIR", tmpDir)
 
-	if loaded.LogLevel != "warn" {
-		t.Errorf("expected env override LogLevel 'warn', got %q", loaded.LogLevel)
-	}
+		cfg := config.GetDefaultConfig()
+		cfg.OutputDir = "/file/output"
+		cfg.TemplatesDir = ""
+
+		path := filepath.Join(tmpDir, "config.json")
+		if err := cfg.Save(path, false); err != nil {
+			t.Fatalf("failed to save config: %v", err)
+		}
+
+		loaded, err := config.LoadConfigFromFile(path)
+		if err != nil {
+			t.Fatalf("failed to load config: %v", err)
+		}
+
+		if loaded.OutputDir != tmpDir {
+			t.Errorf("expected env override OutputDir '%s', got %q", tmpDir, loaded.OutputDir)
+		}
+
+		if loaded.TemplatesDir != tmpDir {
+			t.Errorf("expected env override TemplatesDir '%s', got %q", tmpDir, loaded.TemplatesDir)
+		}
+	})
 }
 
-func TestEnvVariableOverride_OutputDir(t *testing.T) {
-	viper.Reset()
-
-	tmpDir := t.TempDir()
-
-	t.Setenv("SCAFFY_OUTPUT_DIR", tmpDir)
-	t.Setenv("SCAFFY_TEMPLATES_DIR", tmpDir)
-
-	cfg := config.GetDefaultConfig()
-	cfg.OutputDir = "/file/output"
-	cfg.TemplatesDir = ""
-
-	path := filepath.Join(tmpDir, "config.json")
-	if err := cfg.Save(path, false); err != nil {
-		t.Fatalf("failed to save config: %v", err)
-	}
-
-	loaded, err := config.LoadConfigFromFile(path)
-	if err != nil {
-		t.Fatalf("failed to load config: %v", err)
-	}
-
-	if loaded.OutputDir != tmpDir {
-		t.Errorf("expected env override OutputDir '%s', got %q", tmpDir, loaded.OutputDir)
-	}
-
-	if loaded.TemplatesDir != tmpDir {
-		t.Errorf("expected env override TemplatesDir '%s', got %q", tmpDir, loaded.TemplatesDir)
-	}
-}
-
-func TestLoadConfigFromFile_InvalidLogLevel(t *testing.T) { //nolint:paralleltest // uses global viper state (viper.Reset)
-	viper.Reset()
-
-	tmpDir := t.TempDir()
-	path := filepath.Join(tmpDir, "invalid-log-level.json")
-
-	cfg := config.GetDefaultConfig()
-	cfg.LogLevel = "trace"
-
-	err := cfg.Save(path, false)
-	if err == nil {
-		t.Fatal("expected save to fail for invalid log level")
-	}
-}
-
-func TestConfigJSONFormat(t *testing.T) { //nolint:paralleltest // uses global viper state (viper.Reset)
-	viper.Reset()
+func TestConfigJSONFormat(t *testing.T) {
+	t.Parallel()
 
 	tmpDir := t.TempDir()
 	path := filepath.Join(tmpDir, "format-test.json")

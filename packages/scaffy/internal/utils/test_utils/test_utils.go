@@ -1,15 +1,57 @@
-package utils
+package test_utils
 
 import (
 	"bytes"
 	"context"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/spf13/viper"
 
 	"github.com/25prabhu10/scaffy/internal/constants"
 	"github.com/25prabhu10/scaffy/internal/ui"
 	"github.com/spf13/cobra"
 )
+
+const (
+	GoosWindows = "windows"
+	GoosDarwin  = "darwin"
+	GoosLinux   = "linux"
+)
+
+// SetHomeEnv sets the appropriate environment variables to simulate a home directory based on the operating system.
+func SetHomeEnv(t *testing.T, tmpHome string) {
+	t.Helper()
+
+	switch runtime.GOOS {
+	case GoosWindows:
+		t.Setenv("AppData", tmpHome)
+		t.Setenv("USERPROFILE", tmpHome)
+	case GoosDarwin, "ios":
+		t.Setenv("HOME", tmpHome)
+	default:
+		t.Setenv("XDG_CONFIG_HOME", filepath.Join(tmpHome, ".config"))
+	}
+}
+
+// SetupTestEnv sets up a temporary environment for testing, including a temporary home directory and working directory.
+func SetupTestEnv(t *testing.T) string {
+	t.Helper()
+
+	viper.Reset()
+
+	tmpHome := t.TempDir()
+
+	SetHomeEnv(t, tmpHome)
+
+	tmpDir := t.TempDir()
+	t.Chdir(tmpDir)
+
+	return tmpDir
+}
 
 func ExecuteTestCommand(t *testing.T, cmd *cobra.Command, args []string) (*bytes.Buffer, error) {
 	t.Helper()
@@ -89,4 +131,21 @@ func GetLongStringChars() string {
 
 func GetLongString256Chars() string {
 	return strings.Repeat("a", constants.MAX_NAME_LENGTH+1)
+}
+
+type MockOSInfo struct {
+	MockGOOS          string
+	MockUserConfigDir string
+}
+
+func (m *MockOSInfo) GetOS() string {
+	return m.MockGOOS
+}
+
+func (m *MockOSInfo) GetUserConfigDir() (string, error) {
+	if m.MockUserConfigDir != "" {
+		return m.MockUserConfigDir, nil
+	}
+
+	return "", os.ErrNotExist
 }

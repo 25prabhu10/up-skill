@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	"github.com/25prabhu10/scaffy/cmd/cli"
-	"github.com/25prabhu10/scaffy/internal/utils"
+	"github.com/25prabhu10/scaffy/internal/utils/test_utils"
 	"github.com/25prabhu10/scaffy/pkg/build_info"
 )
 
 func TestRootCmd_HelpText(t *testing.T) {
 	t.Parallel()
 
-	buf, err := utils.ExecuteTestCommand(t, cli.GetRootCmd(), []string{"--help"})
+	buf, err := test_utils.ExecuteTestCommand(t, cli.GetRootCmd(), []string{"--help"})
 	if err != nil {
 		t.Fatalf("failed to execute root command: %v", err)
 	}
