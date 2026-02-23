@@ -18,7 +18,7 @@ func TestRootCmd_HelpText(t *testing.T) {
 	}
 
 	output := buf.String()
-	if !strings.Contains(output, "This CLI tool helps you scaffold files for different programming languages and") {
+	if !strings.Contains(output, "This CLI tool helps you scaffold files for different programming") {
 		t.Errorf("unexpected help output: %s", output)
 	}
 }
@@ -39,7 +39,7 @@ func TestGetRootCmd_BasicConfiguration(t *testing.T) {
 		t.Errorf("unexpected command short description: got %s", cmd.Short)
 	}
 
-	if !strings.Contains(cmd.Long, "This CLI tool helps you scaffold files for different programming languages") {
+	if !strings.Contains(cmd.Long, "This CLI tool helps you scaffold files for different programming") {
 		t.Errorf("unexpected command long description: got %s", cmd.Long)
 	}
 }

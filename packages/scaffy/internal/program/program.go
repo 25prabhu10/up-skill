@@ -9,8 +9,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/25prabhu10/scaffy/internal/boilerplate"
 	"github.com/25prabhu10/scaffy/internal/config"
 	"github.com/25prabhu10/scaffy/internal/logger"
+	"github.com/25prabhu10/scaffy/internal/templates"
 	"github.com/25prabhu10/scaffy/internal/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -45,19 +47,39 @@ var (
 type Program struct {
 	config *config.Config
 	logger *slog.Logger
+	fs     utils.FileSystem
+	osInfo utils.OSInfo
+}
+
+type ProgramOption func(*Program)
+
+func WithFileSystem(fs utils.FileSystem) ProgramOption {
+	return func(p *Program) { p.fs = fs }
+}
+
+func WithOSInfo(osInfo utils.OSInfo) ProgramOption {
+	return func(p *Program) { p.osInfo = osInfo }
 }
 
 // New creates a new Program instance by loading the configuration from the specified file or default locations. It also sets the verbose and quiet flags based on the provided parameters.
-func New(configFile string, verbose bool, quiet bool) (*Program, error) {
+func New(configFile string, verbose bool, quiet bool, options ...ProgramOption) (*Program, error) {
 	cfg, err := loadConfiguration(configFile, verbose, quiet)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load configuration: %w", err)
 	}
 
-	return &Program{
+	p := &Program{
 		config: cfg,
 		logger: logger.New(cfg.LogLevel, verbose, quiet),
-	}, nil
+		fs:     utils.NewFileSystem(),
+		osInfo: utils.NewOSInfo(),
+	}
+
+	for _, option := range options {
+		option(p)
+	}
+
+	return p, nil
 }
 
 // InitializeConfig handles directory creation, path resolution, and config saving.
@@ -67,7 +89,7 @@ func (p *Program) InitializeConfig(cfg *config.Config, outputDir string, force b
 	configFilePath := config.DEFAULT_CONFIG_FILE_NAME
 
 	if outputDir != "" {
-		if err := utils.CreateDirectoryIfNotExists(outputDir); err != nil {
+		if err := utils.CreateDirectoryIfNotExists(outputDir, p.fs); err != nil {
 			return "", fmt.Errorf("failed to create output directory: %w", err)
 		}
 
@@ -80,7 +102,7 @@ func (p *Program) InitializeConfig(cfg *config.Config, outputDir string, force b
 		}
 	}
 
-	if err := cfg.Save(configFilePath, force); err != nil {
+	if err := cfg.Save(configFilePath, force, p.fs); err != nil {
 		return configFilePath, fmt.Errorf("failed to create config: %w", err)
 	}
 
@@ -89,11 +111,33 @@ func (p *Program) InitializeConfig(cfg *config.Config, outputDir string, force b
 	return configFilePath, nil
 }
 
+func (p *Program) GenerateFilesFromTemplates(ctx context.Context, name string, force bool) error {
+	p.logger.Debug("Generating files from templates...")
+	p.logger.Debug("Values", "config", p.config, "name", name)
+
+	tm := templates.New(p.config.TemplatesDir, templates.Data{
+		Date:   utils.GetCurrentDate(),
+		Author: p.config.Author,
+		URL:    "",
+	})
+
+	bp := boilerplate.New(tm, p.fs, p.logger)
+
+	options := boilerplate.Options{
+		Name:      name,
+		OutputDir: p.config.OutputDir,
+		Languages: p.config.Languages,
+		Force:     force,
+	}
+
+	return bp.Scaffold(ctx, options)
+}
+
 // GenerateLLMDocs handles directory creation and documentation generation for various formats.
 func (p *Program) GenerateLLMDocs(root *cobra.Command, outputDir string, format string, frontMatter bool) error {
 	p.logger.Debug("generating documentation", "path", outputDir, "format", format, "frontMatter", frontMatter)
 
-	if err := utils.CreateDirectoryIfNotExists(outputDir); err != nil {
+	if err := utils.CreateDirectoryIfNotExists(outputDir, p.fs); err != nil {
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
@@ -163,7 +207,9 @@ func loadConfiguration(configFile string, verbose bool, quiet bool) (*config.Con
 		if errors.As(err, &viper.ConfigFileNotFoundError{}) {
 			var createErr error
 
-			cfg, createErr = config.EnsureDefaultConfig()
+			configMgr := config.NewConfigManager(utils.NewOSInfo(), utils.NewFileSystem())
+
+			cfg, createErr = configMgr.EnsureDefaultConfig()
 			if createErr != nil {
 				return nil, fmt.Errorf("failed to load or create config: %w", createErr)
 			}
@@ -183,8 +229,8 @@ func loadConfiguration(configFile string, verbose bool, quiet bool) (*config.Con
 // loadConfig loads configuration from file or default locations.
 func loadConfig(configFile string) (*config.Config, error) {
 	if configFile != "" {
-		return config.LoadConfigFromFile(configFile)
+		return config.LoadConfigFromFile(viper.GetViper(), configFile)
 	}
 
-	return config.LoadConfigFromDefaultFile()
+	return config.LoadConfigFromDefaultFile(viper.GetViper())
 }

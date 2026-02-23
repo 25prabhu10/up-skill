@@ -3,7 +3,6 @@ package test_utils
 import (
 	"bytes"
 	"context"
-	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -131,21 +130,4 @@ func GetLongStringChars() string {
 
 func GetLongString256Chars() string {
 	return strings.Repeat("a", constants.MAX_NAME_LENGTH+1)
-}
-
-type MockOSInfo struct {
-	MockGOOS          string
-	MockUserConfigDir string
-}
-
-func (m *MockOSInfo) GetOS() string {
-	return m.MockGOOS
-}
-
-func (m *MockOSInfo) GetUserConfigDir() (string, error) {
-	if m.MockUserConfigDir != "" {
-		return m.MockUserConfigDir, nil
-	}
-
-	return "", os.ErrNotExist
 }

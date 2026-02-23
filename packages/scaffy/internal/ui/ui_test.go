@@ -93,7 +93,7 @@ func TestWarning(t *testing.T) {
 
 			u := ui.New(ui.WithOutput(&errBuf), ui.WithQuiet(tt.quiet))
 
-			u.Warningf(tt.format, tt.args...)
+			u.Warnf(tt.format, tt.args...)
 
 			if !strings.Contains(errBuf.String(), tt.contains) {
 				t.Errorf("expected error output to contain %q, got %q", tt.contains, errBuf.String())
@@ -293,7 +293,7 @@ func TestUIConcurrency(t *testing.T) {
 		go func(id int) {
 			uiInstance := ui.FromContext(ctx)
 			uiInstance.Infof("info from goroutine %d", id)
-			uiInstance.Warningf("warning from goroutine %d", id)
+			uiInstance.Warnf("warning from goroutine %d", id)
 			uiInstance.Errorf("error from goroutine %d", id)
 
 			done <- true
@@ -334,7 +334,7 @@ func TestStreamSeparation(t *testing.T) {
 	)
 
 	u.Infof("info message")
-	u.Warningf("warning message")
+	u.Warnf("warning message")
 	u.Errorf("error message")
 
 	// With POSIX compliance, stdout should be empty (no UI messages)

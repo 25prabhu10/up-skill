@@ -16,6 +16,7 @@ import (
 	"github.com/25prabhu10/scaffy/pkg/commands"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // root command errors.
@@ -34,9 +35,9 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   build_info.APP_NAME,
 	Short: "A CLI program to scaffold files for different languages.",
-	Long: `This CLI tool helps you scaffold files for different programming languages and
-frameworks. It supports multiple languages and provides a simple interface to
-generate boilerplate code for your projects.`,
+	Long: `This CLI tool helps you scaffold files for different programming
+languages and frameworks. It supports multiple languages and provides a simple
+interface to generate boilerplate code for your projects.`,
 	Version:           fmt.Sprintf("%s (%s) built at %s", build_info.VERSION, build_info.GIT_COMMIT, build_info.BUILD_DATE),
 	SilenceUsage:      true,
 	PersistentPreRunE: initApp,
@@ -61,10 +62,13 @@ func init() { //nolint:gochecknoinits // init is used to set up the root command
 
 	rootCmd.PersistentFlags().BoolVarP(&flagVerbose, "verbose", "v", false, "verbose output")
 	rootCmd.PersistentFlags().BoolVarP(&flagQuiet, "quiet", "q", false, "suppress non-error output")
+	rootCmd.PersistentFlags().String("log-level", config.GetDefaultLogLevel(), fmt.Sprintf("set log level (%s)", config.AllLogLevelsStr()))
+	cobra.CheckErr(viper.BindPFlag("log-level", rootCmd.PersistentFlags().Lookup("log-level")))
 
 	// register subcommands
 	rootCmd.AddCommand(commands.GetLlmCommand())
-	rootCmd.AddCommand(commands.NewInitCmd())
+	rootCmd.AddCommand(commands.GetInitCmd())
+	rootCmd.AddCommand(commands.GetNewCmd())
 }
 
 // initApp initializes the application context and sets it in the root command. This allows all subcommands to access the program instance and configuration.

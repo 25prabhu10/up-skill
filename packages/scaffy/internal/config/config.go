@@ -74,12 +74,24 @@ type Config struct {
 	TemplatesDir string            `mapstructure:"templates-dir"`
 }
 
+type ConfigManager struct {
+	osInfo utils.OSInfo
+	fs     utils.FileSystem
+}
+
+func NewConfigManager(osInfo utils.OSInfo, fs utils.FileSystem) *ConfigManager {
+	return &ConfigManager{
+		osInfo: osInfo,
+		fs:     fs,
+	}
+}
+
 // GetDefaultConfig returns a new Config with sensible default values.
 func GetDefaultConfig() *Config {
 	return &Config{
 		Author:       "",
 		Languages:    GetDefaultLanguages(),
-		LogLevel:     logLevelError,
+		LogLevel:     GetDefaultLogLevel(),
 		OutputDir:    CURRENT_DIR,
 		TemplatesDir: "",
 	}
@@ -134,19 +146,14 @@ func GetDefaultLanguages() map[string]string {
 	}
 }
 
-// VerboseLogLevel returns the log level string for verbose mode (debug).
-func VerboseLogLevel() string {
-	return logLevelDebug
-}
-
-// QuietLogLevel returns the log level string for quiet mode (error).
-func QuietLogLevel() string {
+// GetDefaultLogLevel returns the default log level for the application.
+func GetDefaultLogLevel() string {
 	return logLevelError
 }
 
 // AllLogLevelsStr returns a comma-separated string of all valid log levels.
 func AllLogLevelsStr() string {
-	return strings.Join(validLogLevels, ",")
+	return strings.Join(validLogLevels, "|")
 }
 
 // LoadConfigFromDefaultFile loads configuration from the default search paths.
@@ -156,8 +163,8 @@ func AllLogLevelsStr() string {
 //
 // If no config file is found, it returns an error.
 // Environment variables with SCAFFY_ prefix can override config values.
-func LoadConfigFromDefaultFile() (*Config, error) {
-	v := newReadViper()
+func LoadConfigFromDefaultFile(viperObj *viper.Viper) (*Config, error) {
+	v := newReadViper(viperObj)
 	v.AddConfigPath(CURRENT_DIR)
 	v.AddConfigPath(GetDefaultConfigDir(utils.NewOSInfo()))
 	v.SetConfigType(CONFIG_FORMAT)
@@ -168,8 +175,8 @@ func LoadConfigFromDefaultFile() (*Config, error) {
 
 // LoadConfigFromFile loads configuration from the specified file path.
 // Environment variables with SCAFFY_ prefix can override config values.
-func LoadConfigFromFile(path string) (*Config, error) {
-	v := newReadViper()
+func LoadConfigFromFile(viperObj *viper.Viper, path string) (*Config, error) {
+	v := newReadViper(viperObj)
 	v.SetConfigFile(path)
 
 	return readConfig(v)
@@ -178,11 +185,11 @@ func LoadConfigFromFile(path string) (*Config, error) {
 // EnsureDefaultConfig creates a default configuration file if none exists.
 // It creates the file at the default config directory and logs the action.
 // Returns the created config and any error encountered.
-func EnsureDefaultConfig() (*Config, error) {
+func (cm *ConfigManager) EnsureDefaultConfig() (*Config, error) {
 	cfg := GetDefaultConfig()
-	configPath := filepath.Join(GetDefaultConfigDir(utils.NewOSInfo()), DEFAULT_CONFIG_FILE_NAME)
+	configPath := filepath.Join(GetDefaultConfigDir(cm.osInfo), DEFAULT_CONFIG_FILE_NAME)
 
-	if err := cfg.Save(configPath, false); err != nil {
+	if err := cfg.Save(configPath, false, cm.fs); err != nil {
 		return nil, fmt.Errorf("failed to create default config: %w", err)
 	}
 
@@ -192,7 +199,7 @@ func EnsureDefaultConfig() (*Config, error) {
 // Save saves the configuration to the specified file path.
 // If overwrite is true, it will overwrite an existing file; otherwise, it
 // returns an error.
-func (c *Config) Save(path string, overwrite bool) error {
+func (c *Config) Save(path string, overwrite bool, fs utils.FileSystem) error {
 	if err := c.Validate(); err != nil {
 		return fmt.Errorf("%w: %w", ErrInvalidConfig, err)
 	}
@@ -201,7 +208,7 @@ func (c *Config) Save(path string, overwrite bool) error {
 
 	configDir := filepath.Dir(path)
 
-	if err := utils.CreateDirectoryIfNotExists(configDir); err != nil {
+	if err := utils.CreateDirectoryIfNotExists(configDir, fs); err != nil {
 		return err
 	}
 
@@ -280,8 +287,7 @@ func setDefaultConfigValues(c *Config) *viper.Viper {
 	return v
 }
 
-func newReadViper() *viper.Viper {
-	v := viper.New()
+func newReadViper(v *viper.Viper) *viper.Viper {
 	setViperDefaults(v)
 
 	v.SetEnvPrefix(strings.ToUpper(utils.NormalizeString(build_info.APP_NAME)))

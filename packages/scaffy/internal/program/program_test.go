@@ -8,15 +8,13 @@ import (
 
 	"github.com/25prabhu10/scaffy/internal/config"
 	"github.com/25prabhu10/scaffy/internal/program"
+	"github.com/25prabhu10/scaffy/internal/utils"
 	"github.com/25prabhu10/scaffy/internal/utils/test_utils"
 	"github.com/25prabhu10/scaffy/pkg/build_info"
 	"github.com/spf13/cobra"
 )
 
 const (
-	goosWindows = "windows"
-	goosDarwin  = "darwin"
-	goosIOS     = "ios"
 	testAppName = "scaffy"
 )
 
@@ -29,6 +27,7 @@ func TestNew(t *testing.T) { //nolint:paralleltest // t.Setenv used
 	tests := []struct {
 		name        string
 		setupFunc   func(t *testing.T, tmpDir string) string
+		logLevel    string
 		verbose     bool
 		quiet       bool
 		expectError bool
@@ -39,6 +38,7 @@ func TestNew(t *testing.T) { //nolint:paralleltest // t.Setenv used
 				t.Helper()
 				return ""
 			},
+			logLevel:    config.GetDefaultLogLevel(),
 			verbose:     false,
 			quiet:       false,
 			expectError: false,
@@ -51,12 +51,13 @@ func TestNew(t *testing.T) { //nolint:paralleltest // t.Setenv used
 				cfgPath := filepath.Join(tmpDir, "test-config.json")
 				cfg := config.GetDefaultConfig()
 
-				if err := cfg.Save(cfgPath, false); err != nil {
+				if err := cfg.Save(cfgPath, false, utils.NewFileSystem()); err != nil {
 					t.Fatalf("failed to save config: %v", err)
 				}
 
 				return cfgPath
 			},
+			logLevel:    config.GetDefaultLogLevel(),
 			verbose:     true,
 			quiet:       false,
 			expectError: false,
@@ -74,6 +75,7 @@ func TestNew(t *testing.T) { //nolint:paralleltest // t.Setenv used
 
 				return cfgPath
 			},
+			logLevel:    config.GetDefaultLogLevel(),
 			verbose:     false,
 			quiet:       true,
 			expectError: true,
@@ -84,6 +86,7 @@ func TestNew(t *testing.T) { //nolint:paralleltest // t.Setenv used
 				t.Helper()
 				return filepath.Join(tmpDir, "non-existent.json")
 			},
+			logLevel:    config.GetDefaultLogLevel(),
 			verbose:     false,
 			quiet:       false,
 			expectError: true,
@@ -135,7 +138,7 @@ func setupExistingConfig(t *testing.T, tmpDir string, outputDir string) {
 	}
 
 	configFilePath := filepath.Join(dir, config.DEFAULT_CONFIG_FILE_NAME)
-	if err := cfg.Save(configFilePath, false); err != nil {
+	if err := cfg.Save(configFilePath, false, utils.NewFileSystem()); err != nil {
 		t.Fatalf("failed to write existing config: %v", err)
 	}
 }

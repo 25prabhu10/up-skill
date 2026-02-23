@@ -16,10 +16,8 @@ var (
 	ErrConfigPathIsDir = errors.New("config file path is a directory")
 )
 
-var force bool
-
-// NewInitCmd creates the init subcommand for initializing scaffy configuration.
-func NewInitCmd() *cobra.Command {
+// GetInitCmd creates the init subcommand for initializing scaffy configuration.
+func GetInitCmd() *cobra.Command {
 	defaultCfg := config.GetDefaultConfig()
 
 	initCmd := &cobra.Command{
@@ -29,13 +27,13 @@ func NewInitCmd() *cobra.Command {
 		Long: fmt.Sprintf(`
 Initialize creates a configuration file for scaffy.
 
-It creates a local config file "%s" in the specified directory (default: current directory).`, config.DEFAULT_CONFIG_FILE_NAME),
+It creates a local config file "%s" in the specified directory (default: current dir).`, config.DEFAULT_CONFIG_FILE_NAME),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runConfigInitializerE(cmd, args, defaultCfg, force)
+			return runConfigInitializerE(cmd, args, defaultCfg)
 		},
 	}
 
-	initCmd.Flags().BoolVar(&force, "force", false, "allow write operations that overwrite files")
+	initCmd.Flags().Bool("force", false, "allow write operations that overwrite files")
 
 	// config overrides
 	initCmd.Flags().StringVarP(&defaultCfg.Author, "author", "a", defaultCfg.Author, "author name")
@@ -48,7 +46,7 @@ It creates a local config file "%s" in the specified directory (default: current
 }
 
 // runConfigInitializerE executes the logic for the init command, creating a config file with default settings.
-func runConfigInitializerE(cmd *cobra.Command, args []string, cfg *config.Config, force bool) error {
+func runConfigInitializerE(cmd *cobra.Command, args []string, cfg *config.Config) error {
 	ctx := cmd.Context()
 
 	userUI := ui.FromContext(ctx)
@@ -59,8 +57,13 @@ func runConfigInitializerE(cmd *cobra.Command, args []string, cfg *config.Config
 		outputDir = args[0]
 	}
 
+	force, err := cmd.Flags().GetBool("force")
+	if err != nil {
+		return err
+	}
+
 	if force {
-		userUI.Warningf("existing config will be overwritten (--force)")
+		userUI.Warnf("existing config will be overwritten (--force)")
 	}
 
 	configFilePath, err := app.InitializeConfig(cfg, outputDir, force)

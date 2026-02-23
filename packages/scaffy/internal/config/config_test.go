@@ -14,6 +14,7 @@ import (
 	"github.com/25prabhu10/scaffy/internal/utils"
 	"github.com/25prabhu10/scaffy/internal/utils/test_utils"
 	"github.com/25prabhu10/scaffy/pkg/build_info"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -94,26 +95,20 @@ func TestConstantsAndDefaults(t *testing.T) {
 		}
 	})
 
-	t.Run("VerboseLogLevel", func(t *testing.T) {
+	t.Run("GetDefaultLogLevel", func(t *testing.T) {
 		t.Parallel()
 
-		if got := config.VerboseLogLevel(); got != logLevelDebug {
-			t.Errorf("expected %q, got %q", logLevelDebug, got)
-		}
-	})
+		expectedLogLevel := "error"
 
-	t.Run("QuietLogLevel", func(t *testing.T) {
-		t.Parallel()
-
-		if got := config.QuietLogLevel(); got != "error" {
-			t.Errorf("expected %q, got %q", "error", got)
+		if got := config.GetDefaultLogLevel(); got != expectedLogLevel {
+			t.Errorf("expected %q, got %q", expectedLogLevel, got)
 		}
 	})
 
 	t.Run("AllLogLevelsStr", func(t *testing.T) {
 		t.Parallel()
 
-		expected := "debug,info,warn,error"
+		expected := "debug|info|warn|error"
 		if got := config.AllLogLevelsStr(); got != expected {
 			t.Errorf("expected %q, got %q", expected, got)
 		}
@@ -393,11 +388,11 @@ func TestConfig_Save(t *testing.T) { //nolint:gocognit // test has multiple subt
 		cfg.TemplatesDir = tmpDir
 		cfg.LogLevel = logLevelDebug
 
-		if err := cfg.Save(path, false); err != nil {
+		if err := cfg.Save(path, false, utils.NewFileSystem()); err != nil {
 			t.Fatalf("failed to save config: %v", err)
 		}
 
-		loaded, err := config.LoadConfigFromFile(path)
+		loaded, err := config.LoadConfigFromFile(viper.New(), path)
 		if err != nil {
 			t.Fatalf("failed to load config: %v", err)
 		}
@@ -428,11 +423,11 @@ func TestConfig_Save(t *testing.T) { //nolint:gocognit // test has multiple subt
 		tmpDir := t.TempDir()
 		path := filepath.Join(tmpDir, "overwrite-test.json")
 
-		if err := config.GetDefaultConfig().Save(path, false); err != nil {
+		if err := config.GetDefaultConfig().Save(path, false, utils.NewFileSystem()); err != nil {
 			t.Fatalf("failed to save initial config: %v", err)
 		}
 
-		err := config.GetDefaultConfig().Save(path, false)
+		err := config.GetDefaultConfig().Save(path, false, utils.NewFileSystem())
 		if err == nil {
 			t.Error("expected error when saving without overwrite")
 		}
@@ -440,11 +435,11 @@ func TestConfig_Save(t *testing.T) { //nolint:gocognit // test has multiple subt
 		cfg := config.GetDefaultConfig()
 		cfg.Author = "updated-author"
 
-		if err := cfg.Save(path, true); err != nil {
+		if err := cfg.Save(path, true, utils.NewFileSystem()); err != nil {
 			t.Errorf("expected no error with overwrite=true, got %v", err)
 		}
 
-		loaded, err := config.LoadConfigFromFile(path)
+		loaded, err := config.LoadConfigFromFile(viper.New(), path)
 		if err != nil {
 			t.Fatalf("failed to load config: %v", err)
 		}
@@ -460,7 +455,7 @@ func TestConfig_Save(t *testing.T) { //nolint:gocognit // test has multiple subt
 		path := filepath.Join(tmpDir, "nested", "deep", "dir", "config.json")
 
 		cfg := config.GetDefaultConfig()
-		if err := cfg.Save(path, false); err != nil {
+		if err := cfg.Save(path, false, utils.NewFileSystem()); err != nil {
 			t.Fatalf("failed to save config with nested dirs: %v", err)
 		}
 
@@ -474,7 +469,7 @@ func TestConfig_Save(t *testing.T) { //nolint:gocognit // test has multiple subt
 
 		cfg := config.GetDefaultConfig()
 
-		err := cfg.Save("", false)
+		err := cfg.Save("", false, utils.NewFileSystem())
 		if err == nil {
 			t.Error("expected error for empty path")
 		}
@@ -488,7 +483,7 @@ func TestConfig_Save(t *testing.T) { //nolint:gocognit // test has multiple subt
 		cfg := config.GetDefaultConfig()
 		cfg.LogLevel = "invalid"
 
-		err := cfg.Save(path, false)
+		err := cfg.Save(path, false, utils.NewFileSystem())
 		if !errors.Is(err, config.ErrInvalidConfig) {
 			t.Errorf("expected ErrInvalidConfig, got %v", err)
 		}
@@ -501,7 +496,7 @@ func TestLoadConfigFromFile(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := config.LoadConfigFromFile("/nonexistent/path/config.json")
+		_, err := config.LoadConfigFromFile(viper.New(), "/nonexistent/path/config.json")
 		if !errors.Is(err, os.ErrNotExist) {
 			t.Errorf("expected os.ErrNotExist, got %v", err)
 		}
@@ -509,6 +504,7 @@ func TestLoadConfigFromFile(t *testing.T) {
 
 	t.Run("invalid json", func(t *testing.T) {
 		t.Parallel()
+
 		tmpDir := t.TempDir()
 		path := filepath.Join(tmpDir, "invalid.json")
 
@@ -517,7 +513,7 @@ func TestLoadConfigFromFile(t *testing.T) {
 			t.Fatalf("failed to write invalid JSON: %v", err)
 		}
 
-		_, err := config.LoadConfigFromFile(path)
+		_, err := config.LoadConfigFromFile(viper.New(), path)
 		if !errors.Is(err, config.ErrReadConfig) {
 			t.Errorf("expected ErrReadConfig, got %v", err)
 		}
@@ -525,9 +521,10 @@ func TestLoadConfigFromFile(t *testing.T) {
 
 	t.Run("directory path", func(t *testing.T) {
 		t.Parallel()
+
 		tmpDir := t.TempDir()
 
-		_, err := config.LoadConfigFromFile(tmpDir)
+		_, err := config.LoadConfigFromFile(viper.New(), tmpDir)
 		if !errors.Is(err, config.ErrReadConfig) {
 			t.Errorf("expected ErrReadConfig, got %v", err)
 		}
@@ -535,6 +532,7 @@ func TestLoadConfigFromFile(t *testing.T) {
 
 	t.Run("invalid log level in file", func(t *testing.T) {
 		t.Parallel()
+
 		tmpDir := t.TempDir()
 		path := filepath.Join(tmpDir, "invalid-log-level.json")
 
@@ -543,7 +541,7 @@ func TestLoadConfigFromFile(t *testing.T) {
 			t.Fatalf("failed to write invalid config: %v", err)
 		}
 
-		_, err := config.LoadConfigFromFile(path)
+		_, err := config.LoadConfigFromFile(viper.New(), path)
 		if !errors.Is(err, config.ErrInvalidConfig) {
 			t.Errorf("expected ErrInvalidConfig, got %v", err)
 		}
@@ -555,7 +553,7 @@ func TestLoadConfigFromDefaultFile(t *testing.T) { //nolint:paralleltest // test
 		tmpHome := t.TempDir()
 		test_utils.SetHomeEnv(t, tmpHome)
 
-		_, err := config.LoadConfigFromDefaultFile()
+		_, err := config.LoadConfigFromDefaultFile(viper.New())
 		if !errors.Is(err, os.ErrNotExist) && !strings.Contains(err.Error(), "Not Found") {
 			t.Errorf("expected os.ErrNotExist or 'Not Found' error, got %v", err)
 		}
@@ -569,11 +567,11 @@ func TestLoadConfigFromDefaultFile(t *testing.T) { //nolint:paralleltest // test
 		cfg.Author = "current-dir-author"
 
 		configPath := filepath.Join(tmpDir, "scaffy.json")
-		if err := cfg.Save(configPath, false); err != nil {
+		if err := cfg.Save(configPath, false, utils.NewFileSystem()); err != nil {
 			t.Fatalf("failed to save config: %v", err)
 		}
 
-		loaded, err := config.LoadConfigFromDefaultFile()
+		loaded, err := config.LoadConfigFromDefaultFile(viper.New())
 		if err != nil {
 			t.Fatalf("failed to load config from default: %v", err)
 		}
@@ -589,7 +587,9 @@ func TestEnsureDefaultConfig(t *testing.T) { //nolint:paralleltest // test modif
 		tmpHome := t.TempDir()
 		test_utils.SetHomeEnv(t, tmpHome)
 
-		cfg, err := config.EnsureDefaultConfig()
+		configMgr := config.NewConfigManager(utils.NewOSInfo(), utils.NewFileSystem())
+
+		cfg, err := configMgr.EnsureDefaultConfig()
 		if err != nil {
 			t.Fatalf("failed to ensure default config: %v", err)
 		}
@@ -608,12 +608,14 @@ func TestEnsureDefaultConfig(t *testing.T) { //nolint:paralleltest // test modif
 		tmpHome := t.TempDir()
 		test_utils.SetHomeEnv(t, tmpHome)
 
-		cfg, err := config.EnsureDefaultConfig()
+		configMgr := config.NewConfigManager(utils.NewOSInfo(), utils.NewFileSystem())
+
+		cfg, err := configMgr.EnsureDefaultConfig()
 		if err != nil {
 			t.Fatalf("first call failed: %v", err)
 		}
 
-		_, err = config.EnsureDefaultConfig()
+		_, err = configMgr.EnsureDefaultConfig()
 		if err == nil {
 			t.Error("expected error when config already exists")
 		}
@@ -635,11 +637,11 @@ func TestEnvVariableOverride(t *testing.T) {
 		cfg.LogLevel = logLevelDebug
 
 		path := filepath.Join(tmpDir, "config.json")
-		if err := cfg.Save(path, false); err != nil {
+		if err := cfg.Save(path, false, utils.NewFileSystem()); err != nil {
 			t.Fatalf("failed to save config: %v", err)
 		}
 
-		loaded, err := config.LoadConfigFromFile(path)
+		loaded, err := config.LoadConfigFromFile(viper.New(), path)
 		if err != nil {
 			t.Fatalf("failed to load config: %v", err)
 		}
@@ -663,11 +665,11 @@ func TestEnvVariableOverride(t *testing.T) {
 		cfg.TemplatesDir = ""
 
 		path := filepath.Join(tmpDir, "config.json")
-		if err := cfg.Save(path, false); err != nil {
+		if err := cfg.Save(path, false, utils.NewFileSystem()); err != nil {
 			t.Fatalf("failed to save config: %v", err)
 		}
 
-		loaded, err := config.LoadConfigFromFile(path)
+		loaded, err := config.LoadConfigFromFile(viper.New(), path)
 		if err != nil {
 			t.Fatalf("failed to load config: %v", err)
 		}
@@ -692,7 +694,7 @@ func TestConfigJSONFormat(t *testing.T) {
 	cfg.Author = "json-test"
 	cfg.Languages = map[string]string{"go": "go", "rust": "rs"}
 
-	if err := cfg.Save(path, false); err != nil {
+	if err := cfg.Save(path, false, utils.NewFileSystem()); err != nil {
 		t.Fatalf("failed to save config: %v", err)
 	}
 

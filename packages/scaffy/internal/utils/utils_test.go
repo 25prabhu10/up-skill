@@ -174,7 +174,7 @@ func TestCreateDirectoryIfNotExists(t *testing.T) { //nolint:tparallel,parallelt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := utils.CreateDirectoryIfNotExists(tt.dirPath)
+			err := utils.CreateDirectoryIfNotExists(tt.dirPath, utils.NewFileSystem())
 
 			if tt.expectErr && err == nil {
 				t.Errorf("expected error, got nil")

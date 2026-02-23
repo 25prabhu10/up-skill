@@ -8,6 +8,7 @@ import (
 
 	"github.com/25prabhu10/scaffy/internal/config"
 	"github.com/25prabhu10/scaffy/internal/utils/test_utils"
+	"github.com/spf13/viper"
 
 	"github.com/25prabhu10/scaffy/pkg/build_info"
 	"github.com/25prabhu10/scaffy/pkg/commands"
@@ -61,7 +62,7 @@ func TestInitCmd_Success(t *testing.T) { //nolint:paralleltest // t.Setenv used 
 			verifyConfig: func(t *testing.T, configPath string) {
 				t.Helper()
 
-				cfg, err := config.LoadConfigFromFile(configPath)
+				cfg, err := config.LoadConfigFromFile(viper.New(), configPath)
 				if err != nil {
 					t.Fatalf("failed to load config: %v", err)
 				}
@@ -84,7 +85,7 @@ func TestInitCmd_Success(t *testing.T) { //nolint:paralleltest // t.Setenv used 
 	for _, tt := range tests { //nolint:paralleltest
 		t.Run(tt.name, func(t *testing.T) {
 			tmpDir := test_utils.SetupTestEnv(t)
-			cmd := commands.NewInitCmd()
+			cmd := commands.GetInitCmd()
 
 			uiStderr, _, err := test_utils.ExecuteTestCommandWithContext(t, cmd, tt.args, false, false)
 			if err != nil {
@@ -134,7 +135,7 @@ func TestInitCmd_ExistingConfig(t *testing.T) { //nolint:paralleltest // t.Seten
 				t.Fatalf("failed to create existing config: %v", err)
 			}
 
-			cmd := commands.NewInitCmd()
+			cmd := commands.GetInitCmd()
 			uiStderr, _, err := test_utils.ExecuteTestCommandWithContext(t, cmd, tt.args, false, false)
 
 			if tt.expectError { //nolint:nestif // clearer to separate error vs no error cases here
@@ -183,7 +184,7 @@ func TestInitCmd_Errors(t *testing.T) { //nolint:paralleltest // t.Setenv used a
 				}
 			}
 
-			cmd := commands.NewInitCmd()
+			cmd := commands.GetInitCmd()
 
 			_, _, err := test_utils.ExecuteTestCommandWithContext(t, cmd, tt.args, false, false)
 			if err == nil {

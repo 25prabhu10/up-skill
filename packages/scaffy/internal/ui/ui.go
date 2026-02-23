@@ -63,9 +63,9 @@ func WithQuiet(quiet bool) Option {
 	}
 }
 
-// Warningf prints a warning message to stderr.
+// Warnf prints a warning message to stderr.
 // Warnings are shown even in quiet mode as they require user attention.
-func (u *UI) Warningf(format string, args ...any) {
+func (u *UI) Warnf(format string, args ...any) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 
